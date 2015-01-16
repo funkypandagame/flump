@@ -4,7 +4,8 @@
     creationComplete="init();"
     alpha="0"
     renderMode="direct"
-    width="480" height="720" showStatusBar="false">
+    showStatusBar="false"
+    width="480" height="720">
 
   <!-- I'd like to use visible="false" on the window and then set visible to true in init to hide
        the move to the top-left. If I do that, the window appears in the proper location and then

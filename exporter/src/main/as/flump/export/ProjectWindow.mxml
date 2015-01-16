@@ -5,8 +5,8 @@
   <s:layout>
     <s:VerticalLayout paddingLeft="20" paddingTop="20" paddingRight="20" paddingBottom="20"/>
   </s:layout>
-  <s:HGroup>
-    <s:DataGrid id="libraries" width="480" height="300">
+  <s:HGroup height="300" width="100%">
+    <s:DataGrid id="libraries" width="480" height="100%">
       <s:typicalItem>
         <s:DataItem path="multiple/segment/nested/path/of/some/depth" modified="" valid=""/>
       </s:typicalItem>
@@ -20,7 +20,7 @@
       <mx:ArrayCollection/>
     </s:DataGrid>
     <!-- Both the Form and the FormItems need widths on them to make the percentage work -->
-    <s:VGroup width="50%">
+    <s:VGroup width="100%">
         <s:FormItem label="Import Directory" width="500">
           <s:HGroup>
             <!-- Explicitly set the width to make it line up with the export form -->
