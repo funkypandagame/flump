@@ -10,20 +10,16 @@ import aspire.util.Set;
 import aspire.util.Sets;
 import aspire.util.XmlUtil;
 
-import com.adobe.crypto.MD5;
+import deng.fzip.FZip;
 
-import flash.filesystem.File;
+import deng.fzip.FZipFile;
+
 import flash.utils.ByteArray;
 import flash.utils.Dictionary;
 
 import flump.SwfTexture;
 import flump.Util;
-import flump.executor.Executor;
-import flump.executor.Future;
-import flump.executor.FutureTask;
 import flump.executor.load.LoadedSwf;
-import flump.executor.load.SwfLoader;
-import flump.export.Files;
 import flump.mold.KeyframeMold;
 import flump.mold.LayerMold;
 import flump.mold.MovieMold;
@@ -75,65 +71,6 @@ public class XflLibrary
         return result;
     }
 
-    public function finishLoading () :void {
-        var movie :MovieMold = null;
-
-        // Parse all un-exported movies that are referenced by the exported movies.
-        for (var ii :int = 0; ii < movies.length; ++ii) {
-            movie = movies[ii];
-            for each (var symbolName :String in XflMovie.getSymbolNames(movie).toArray()) {
-                var xml :XML = _unexportedMovies.remove(symbolName);
-                if (xml != null) parseMovie(xml);
-            }
-        }
-
-        for each (movie in movies) if (isExported(movie)) prepareForPublishing(movie);
-    }
-
-    protected function prepareForPublishing (movie :MovieMold) :void {
-        if (!_toPublish.add(movie)) return;
-
-        for each (var layer :LayerMold in movie.layers) {
-            for each (var kf :KeyframeMold in layer.keyframes) {
-                var swfTexture :SwfTexture = null;
-                if (movie.flipbook) {
-                    try {
-                        swfTexture = SwfTexture.fromFlipbook(this, movie, kf.index)
-                    } catch (e :Error) {
-                        addTopLevelError(ParseError.CRIT, "Error creating flipbook texture from '" + movie.id + "'");
-                        swfTexture = null;
-                    }
-
-                } else {
-                    if (kf.ref == null) continue;
-                    kf.ref = _libraryNameToId.get(kf.ref);
-                    var item :Object = _idToItem[kf.ref];
-                    if (item == null) {
-                        addTopLevelError(ParseError.CRIT,
-                            "unrecognized library item '" + kf.ref + "'");
-                    } else if (item is MovieMold) {
-                        prepareForPublishing(MovieMold(item));
-                    } else if (item is XflTexture) {
-                        const tex :XflTexture = XflTexture(item);
-                        try {
-                            swfTexture = SwfTexture.fromTexture(this, tex);
-                        } catch (e :Error) {
-                            addTopLevelError(ParseError.CRIT, "Error creating texture '" + tex.symbol + "'");
-                            swfTexture = null;
-                        }
-                    }
-                }
-
-                if (swfTexture != null) {
-                    // Texture symbols have origins. For texture layer keyframes,
-                    // we combine the texture's origin with the keyframe's pivot point.
-                    kf.pivotX += swfTexture.origin.x;
-                    kf.pivotY += swfTexture.origin.y;
-                }
-            }
-        }
-    }
-
     public function createId (item :Object, libraryName :String, symbol :String) :String {
         if (symbol != null) _moldToSymbol.put(item, symbol);
         const id :String = symbol == null ? IMPLICIT_PREFIX + libraryName : symbol;
@@ -160,45 +97,20 @@ public class XflLibrary
         _errors.push(new ParseError(location, severity, message, e));
     }
 
-    public function loadSWF (path :String, loader :Executor=null) :Future {
-        const onComplete :FutureTask = new FutureTask();
-
-        const swfFile :File = new File(path);
-        const loadSwfFile :Future = Files.load(swfFile, loader);
-        loadSwfFile.succeeded.connect(function (data :ByteArray) :void {
-            md5 = MD5.hashBytes(data);
-
-            const loadSwf :Future = new SwfLoader().loadFromBytes(data);
-            loadSwf.succeeded.connect(function (loadedSwf :LoadedSwf) :void {
-                swf = loadedSwf;
-            });
-            loadSwf.failed.connect(function (error :Error) :void {
-                addTopLevelError(ParseError.CRIT, error.message, error);
-            });
-            loadSwf.completed.connect(onComplete.succeed);
-        });
-        loadSwfFile.failed.connect(function (error :Error) :void {
-            addTopLevelError(ParseError.CRIT, error.message, error);
-            onComplete.fail(error);
-        });
-
-        return onComplete;
-    }
-
-    /**
-     * @returns A list of paths to symbols in this library.
-     */
-    public function parseDocumentFile (fileData :ByteArray, path :String) :Vector.<String> {
-        const docXml :XML = Util.bytesToXML(fileData);
+    public function parseFlaFile(flaZip : FZip, _swf : LoadedSwf, _md5 : String) :void {
+        swf = _swf;
+        md5 = _md5;
+        const domFile :FZipFile = flaZip.getFileByName("DOMDocument.xml");
+        const docXml :XML = Util.bytesToXML(domFile.content);
         frameRate = XmlUtil.getNumberAttr(docXml, FRAME_RATE, 24);
 
         const hex :String = XmlUtil.getStringAttr(docXml, BACKGROUND_COLOR, "#ffffff");
         backgroundColor = parseInt(hex.substr(1), 16);
 
         if (docXml.media != null) {
-            for each (var bitmap :XML in docXml.media.DOMBitmapItem) {
-                if (XmlUtil.getBooleanAttr(bitmap, XflSymbol.EXPORT_FOR_ACTIONSCRIPT, false)) {
-                    textures.push(new XflTexture(this, location, bitmap));
+            for each (var bitmapXML :XML in docXml.media.DOMBitmapItem) {
+                if (XmlUtil.getBooleanAttr(bitmapXML, XflSymbol.EXPORT_FOR_ACTIONSCRIPT, false)) {
+                    textures.push(new XflTexture(this, bitmapXML));
                 }
             }
         }
@@ -210,17 +122,34 @@ public class XflLibrary
             }
         }
 
-        return paths;
+        for each (var path :String in paths) {
+            var symbolFile :FZipFile = flaZip.getFileByName(path);
+            parseLibraryFile(symbolFile.content, path);
+        }
+
+        var movie :MovieMold = null;
+        // Parse all un-exported movies that are referenced by the exported movies.
+        for (var ii :int = 0; ii < movies.length; ++ii) {
+            movie = movies[ii];
+            for each (var symbolName :String in XflMovie.getSymbolNames(movie).toArray()) {
+                var xml :XML = _unexportedMovies.remove(symbolName);
+                if (xml != null) movies.push(XflMovie.parse(this, xml));
+            }
+        }
+        for each (movie in movies) {
+            if (isExported(movie)) {
+                prepareForPublishing(movie);
+            }
+        }
     }
 
-    public function parseLibraryFile (fileData :ByteArray, path :String) :void {
+    private function parseLibraryFile(fileData :ByteArray, path :String) :void {
         const xml :XML = Util.bytesToXML(fileData);
         if (!XflSymbol.isSymbolItem(xml)) {
-            addTopLevelError(ParseError.DEBUG,
-                "Skipping file since its root element isn't " + XflSymbol.SYMBOL_ITEM);
+            addTopLevelError(ParseError.DEBUG, "Skipping file since its root element isn't " + XflSymbol.SYMBOL_ITEM);
             return;
         } else if (XmlUtil.getStringAttr(xml, XflSymbol.TYPE, "") == XflSymbol.TYPE_GRAPHIC) {
-//            addTopLevelError(ParseError.DEBUG, "Skipping file because symbolType=graphic");
+            trace("Skipping file because symbolType=graphic", path);
             return;
         }
 
@@ -232,11 +161,10 @@ public class XflLibrary
                 // from the swf.
                 // TODO: remove this restriction by loading the entire swf before reading textures?
                 if (!XmlUtil.getBooleanAttr(xml, XflSymbol.EXPORT_IN_FIRST_FRAME, true)) {
-                    addError(location + ":" + XmlUtil.getStringAttr(xml, XflSymbol.EXPORT_CLASS_NAME),
-                        ParseError.CRIT, "\"Export in frame 1\" must be set");
+                    addError(location + ":" + XmlUtil.getStringAttr(xml, XflSymbol.EXPORT_CLASS_NAME), ParseError.CRIT, "\"Export in frame 1\" must be set");
                     return;
                 }
-                var texture :XflTexture = new XflTexture(this, location, xml);
+                var texture :XflTexture = new XflTexture(this, xml);
                 if (texture.isValid(this)) textures.push(texture);
                 else addError(location + ":" + texture.symbol, ParseError.CRIT, "Sprite is empty");
 
@@ -244,18 +172,56 @@ public class XflLibrary
                 // It's a movie. If it's exported, we parse it now.
                 // Else, we save it for possible parsing later.
                 // (Un-exported movies that are not referenced will not be published.)
-                if (XflMovie.isExported(xml)) parseMovie(xml);
+                if (XflMovie.isExported(xml)) movies.push(XflMovie.parse(this, xml));
                 else _unexportedMovies.put(XflMovie.getName(xml), xml);
             }
         } catch (e :Error) {
-            addTopLevelError(ParseError.CRIT,
-                "Unable to parse " + (isSprite ? "sprite" : "movie") + " in " + path, e);
+            addTopLevelError(ParseError.CRIT, "Unable to parse " + (isSprite ? "sprite" : "movie") + " in " + path, e);
             log.error("Unable to parse " + path, e);
         }
     }
 
-    protected function parseMovie (xml :XML) :void {
-        movies.push(XflMovie.parse(this, xml));
+    protected function prepareForPublishing (movie :MovieMold) :void {
+        if (!_toPublish.add(movie)) return;
+
+        for each (var layer :LayerMold in movie.layers) {
+            for each (var kf :KeyframeMold in layer.keyframes) {
+                var swfTexture :SwfTexture = null;
+                if (movie.flipbook) {
+                    try {
+                        swfTexture = SwfTexture.fromFlipbook(this, movie, kf.index)
+                    } catch (e :Error) {
+                        addTopLevelError(ParseError.CRIT, "Error creating flipbook texture from '" + movie.id + "'");
+                        swfTexture = null;
+                    }
+
+                } else {
+                    if (kf.ref == null) continue;
+                    kf.ref = _libraryNameToId.get(kf.ref);
+                    var item :Object = _idToItem[kf.ref];
+                    if (item == null) {
+                        addTopLevelError(ParseError.CRIT, "unrecognized library item '" + kf.ref + "'");
+                    } else if (item is MovieMold) {
+                        prepareForPublishing(MovieMold(item));
+                    } else if (item is XflTexture) {
+                        const tex :XflTexture = XflTexture(item);
+                        try {
+                            swfTexture = SwfTexture.fromTexture(this, tex);
+                        } catch (e :Error) {
+                            addTopLevelError(ParseError.CRIT, "Error creating texture '" + tex.symbol + "'");
+                            swfTexture = null;
+                        }
+                    }
+                }
+
+                if (swfTexture != null) {
+                    // Texture symbols have origins. For texture layer keyframes,
+                    // we combine the texture's origin with the keyframe's pivot point.
+                    kf.pivotX += swfTexture.origin.x;
+                    kf.pivotY += swfTexture.origin.y;
+                }
+            }
+        }
     }
 
     /** Library name to XML for movies in the XFL that are not marked for export */

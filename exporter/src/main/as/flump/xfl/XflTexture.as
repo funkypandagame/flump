@@ -12,7 +12,7 @@ public class XflTexture
 {
     public var symbol :String;
 
-    public function XflTexture (lib :XflLibrary, location :String, xml :XML) {
+    public function XflTexture (lib :XflLibrary, xml :XML) {
         symbol = XmlUtil.getStringAttr(xml, "linkageClassName");
         lib.createId(this, XmlUtil.getStringAttr(xml, "name"), symbol);
     }

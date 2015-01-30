@@ -88,10 +88,6 @@ public class ExportController {
 
         var load :Future;
         switch (Files.getExtension(file)) {
-        case "xfl":
-            name = name.substr(0, name.lastIndexOf("/"));
-            load = new XflLoader().load(name, file.parent);
-            break;
         case "fla":
             name = name.substr(0, name.lastIndexOf("."));
             load = new FlaLoader().load(name, file);
