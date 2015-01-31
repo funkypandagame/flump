@@ -46,9 +46,8 @@ public class SwfTexture
             quality :String = StageQuality.BEST, scale :Number = 1,
             useNamespace :Boolean = false) :SwfTexture {
 
-        if (lib.textureScales[symbol]) {
-            scale = scale * lib.textureScales[symbol]; // NEW
-        }
+        scale = scale * lib.textureScales[symbol];
+        
         const klass :Class = Class(lib.swf.getSymbol(symbol));
         const instance :Object = new klass();
         const ns :String = useNamespace ? lib.location + "/" : "";
