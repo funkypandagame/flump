@@ -79,7 +79,7 @@ public class DisplayCreator
     }
 
     public function createMovie (name :String) :Movie {
-        return new Movie(_lib.getItem(name, MovieMold), _lib.frameRate, this);
+        return new Movie(_lib.getMovieMold(name), _lib.frameRate, this);
     }
 
     public function getMemoryUsage (id :String, subtex :Dictionary = null) :int {
@@ -92,7 +92,7 @@ public class DisplayCreator
             return usage;
         }
 
-        const mold :MovieMold = _lib.getItem(id, MovieMold);
+        const mold :MovieMold = _lib.getMovieMold(id);
         if (subtex == null) subtex = new Dictionary();
         for each (var layer :LayerMold in mold.layers) {
             for each (var kf :KeyframeMold in layer.keyframes) getMemoryUsage(kf.ref, subtex);
@@ -120,17 +120,13 @@ public class DisplayCreator
      */
     public function getMaxDrawn (id :String) :int { return _maxDrawn.get(id); }
 
-    protected function loadTexture (symbol :String) :DisplayObject {
-        return ImageCreator(_imageCreators[symbol]).create();
-    }
-
     protected function calcMaxDrawn (id :String) :int {
         if (id == null) return 0;
 
         const tex :Texture = getStarlingTexture(id);
         if (tex != null) return tex.width * tex.height;
 
-        const mold :MovieMold = _lib.getItem(id, MovieMold);
+        const mold :MovieMold = _lib.getMovieMold(id);
         var maxDrawn :int = 0;
         for (var ii :int = 0; ii < mold.frames; ii++) {
             var drawn :int = 0;

@@ -49,7 +49,7 @@ public class TexturePacker
         var useNamespaces :Boolean = _libs.length > 1;
         for each (var lib :XflLibrary in _libs) {
             for each (var tex :XflTexture in lib.textures) {
-                _unpacked.push(SwfTexture.fromTexture(lib, tex, _quality, scale, useNamespaces));
+                _unpacked.push(SwfTexture.fromTexture(lib, tex.symbol, _quality, scale, useNamespaces));
             }
             for each (var movie :MovieMold in lib.movies) {
                 if (!movie.flipbook) continue;

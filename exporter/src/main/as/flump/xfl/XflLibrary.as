@@ -9,6 +9,7 @@ import aspire.util.Maps;
 import aspire.util.Set;
 import aspire.util.Sets;
 import aspire.util.XmlUtil;
+import aspire.util.sets.MapSet;
 
 import deng.fzip.FZip;
 
@@ -16,6 +17,7 @@ import deng.fzip.FZipFile;
 
 import flash.utils.ByteArray;
 import flash.utils.Dictionary;
+import flash.utils.getTimer;
 
 import flump.SwfTexture;
 import flump.Util;
@@ -54,11 +56,12 @@ public class XflLibrary
         this.location = location;
     }
 
-    public function getItem (id :String, requiredType :Class=null) :* {
-        const result :* = _idToItem[id];
-        if (result === undefined) throw new Error("Unknown library item '" + id + "'");
-        else if (requiredType != null) return requiredType(result);
-        else return result;
+    public function getMovieMold(id : String) : MovieMold {
+        const result : MovieMold = _idToItem[id];
+        if (result == null) {
+            throw new Error("Unknown library item '" + id + "'");
+        }
+        return result;
     }
 
     public function isExported (movie :MovieMold) :Boolean {
@@ -110,7 +113,7 @@ public class XflLibrary
         if (docXml.media != null) {
             for each (var bitmapXML :XML in docXml.media.DOMBitmapItem) {
                 if (XmlUtil.getBooleanAttr(bitmapXML, XflSymbol.EXPORT_FOR_ACTIONSCRIPT, false)) {
-                    textures.push(new XflTexture(this, bitmapXML));
+                    addTexture(bitmapXML);
                 }
             }
         }
@@ -136,12 +139,62 @@ public class XflLibrary
                 if (xml != null) movies.push(XflMovie.parse(this, xml));
             }
         }
+        /*
         for each (movie in movies) {
             if (isExported(movie)) {
                 prepareForPublishing(movie);
             }
         }
+        */
+        for each (movie in movies) {
+            if (isExported(movie)) {
+                //prepareForPublishing(movie);
+                setKeyframeIDs(movie);
+            }
+        }
+        _toPublish.clear();
+        for each (movie in movies) {
+            if (isExported(movie)) {
+                setKeyframePivots(movie);
+            }
+        }
+        // Scale textures based on the biggest used size
+        var t1 : Number = getTimer();
+        for each (var texture:XflTexture in textures) {
+            // find all keyframes who use this texture
+            var kfs : Vector.<KeyframeMold> = new Vector.<KeyframeMold>();
+            for each (movie in movies) {
+                for each (var layer:LayerMold in movie.layers) {
+                    for each (var kf:KeyframeMold in layer.keyframes) {
+                        if (texture == _idToItem[kf.ref]) {
+                            kfs.push(kf);
+                        }
+                    }
+                }
+            }
+            // get the max scale for this texture
+            var maxScale : Number = 0;
+            for each (var kfMold:KeyframeMold in kfs) {
+                maxScale = Math.max(0, Math.abs(kfMold.scaleX), Math.abs(kfMold.scaleY));
+            }
+            trace("symbol", texture.symbol,"max scale:", maxScale);
+            // adjust the scale of all keyframes, so that max scale is 1
+            for each (var mold:KeyframeMold in kfs) {
+                mold.scaleX = mold.scaleX / maxScale;
+                mold.scaleY = mold.scaleY / maxScale;
+                mold.pivotX = mold.pivotX * maxScale;
+                mold.pivotY = mold.pivotY * maxScale;
+            }
+            // Store the max scale. It will be used when creating a new SwfTexture
+            textureScales[texture.symbol] = maxScale;
+        }
+        trace("TIME", (getTimer()-t1));
+
+
+
     }
+
+    public const textureScales : Dictionary = new Dictionary();
 
     private function parseLibraryFile(fileData :ByteArray, path :String) :void {
         const xml :XML = Util.bytesToXML(fileData);
@@ -164,10 +217,7 @@ public class XflLibrary
                     addError(location + ":" + XmlUtil.getStringAttr(xml, XflSymbol.EXPORT_CLASS_NAME), ParseError.CRIT, "\"Export in frame 1\" must be set");
                     return;
                 }
-                var texture :XflTexture = new XflTexture(this, xml);
-                if (texture.isValid(this)) textures.push(texture);
-                else addError(location + ":" + texture.symbol, ParseError.CRIT, "Sprite is empty");
-
+                addTexture(xml);
             } else {
                 // It's a movie. If it's exported, we parse it now.
                 // Else, we save it for possible parsing later.
@@ -180,8 +230,8 @@ public class XflLibrary
             log.error("Unable to parse " + path, e);
         }
     }
-
-    protected function prepareForPublishing (movie :MovieMold) :void {
+/*
+    protected function prepareForPublishing(movie :MovieMold) :void {
         if (!_toPublish.add(movie)) return;
 
         for each (var layer :LayerMold in movie.layers) {
@@ -206,7 +256,7 @@ public class XflLibrary
                     } else if (item is XflTexture) {
                         const tex :XflTexture = XflTexture(item);
                         try {
-                            swfTexture = SwfTexture.fromTexture(this, tex);
+                            swfTexture = SwfTexture.fromTexture(this, tex.symbol);
                         } catch (e :Error) {
                             addTopLevelError(ParseError.CRIT, "Error creating texture '" + tex.symbol + "'");
                             swfTexture = null;
@@ -221,6 +271,74 @@ public class XflLibrary
                     kf.pivotY += swfTexture.origin.y;
                 }
             }
+        }
+    }
+*/
+
+    protected function setKeyframePivots(movie :MovieMold) :void {
+        if (!_toPublish.add(movie)) return;
+        for each (var layer :LayerMold in movie.layers) {
+            for each (var kf :KeyframeMold in layer.keyframes) {
+                var swfTexture :SwfTexture = null;
+                if (movie.flipbook) {
+                    try {
+                        swfTexture = SwfTexture.fromFlipbook(this, movie, kf.index)
+                    } catch (e :Error) {
+                        addTopLevelError(ParseError.CRIT, "Error creating flipbook texture from '" + movie.id + "'");
+                        swfTexture = null;
+                    }
+                } else {
+                    if (kf.ref == null) continue;
+                    var item :Object = _idToItem[kf.ref];
+                    if (item is MovieMold) {
+                        setKeyframePivots(MovieMold(item));
+                    } else if (item is XflTexture) {
+                        const tex :XflTexture = XflTexture(item);
+                        try {
+                            swfTexture = SwfTexture.fromTexture(this, tex.symbol);
+                        } catch (e :Error) {
+                            addTopLevelError(ParseError.CRIT, "Error creating texture '" + tex.symbol + "'");
+                            swfTexture = null;
+                        }
+                    }
+                }
+                if (swfTexture != null) {
+                    // Texture symbols have origins. For texture layer keyframes,
+                    // we combine the texture's origin with the keyframe's pivot point.
+                    kf.pivotX += swfTexture.origin.x;
+                    kf.pivotY += swfTexture.origin.y;
+                }
+            }
+        }
+    }
+
+    protected function setKeyframeIDs(movie :MovieMold) :void {
+        if (!_toPublish.add(movie)) return;
+        for each (var layer :LayerMold in movie.layers) {
+            for each (var kf :KeyframeMold in layer.keyframes) {
+                if (!movie.flipbook) {
+                    if (kf.ref == null) continue;
+                    kf.ref = _libraryNameToId.get(kf.ref);
+                    var item :Object = _idToItem[kf.ref];
+                    if (item == null) {
+                        addTopLevelError(ParseError.CRIT, "unrecognized library item '" + kf.ref + "'");
+                    } else if (item is MovieMold) {
+                        setKeyframeIDs(MovieMold(item));
+                    }
+                }
+            }
+        }
+    }
+
+    private function addTexture(xml : XML) : void {
+        var symbol : String = XmlUtil.getStringAttr(xml, "linkageClassName");
+        var swfTex : SwfTexture = SwfTexture.fromTexture(this, symbol);
+        if (swfTex.w > 0 && swfTex.h > 0) {
+            var tex : XflTexture = new XflTexture(symbol);
+            createId(tex, XmlUtil.getStringAttr(xml, "name"), symbol);
+            textures.push(tex);
+        } else {
+            addError(location + ":" + symbol, ParseError.CRIT, "Sprite is empty");
         }
     }
 

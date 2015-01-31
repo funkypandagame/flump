@@ -37,18 +37,24 @@ public class SwfTexture
         clip.gotoAndStop(frame + 1);
         const ns :String = useNamespace ? lib.location + "/" : "";
         const name :String = ns + movie.id + "_flipbook_" + frame;
+
+        //TODO scale = scale * lib.textureScales[]
         return new SwfTexture(name, clip, scale, quality);
     }
 
-    public static function fromTexture (lib :XflLibrary, tex :XflTexture,
+    public static function fromTexture (lib :XflLibrary, symbol : String,
             quality :String = StageQuality.BEST, scale :Number = 1,
             useNamespace :Boolean = false) :SwfTexture {
-        const klass :Class = Class(lib.swf.getSymbol(tex.symbol));
+
+        if (lib.textureScales[symbol]) {
+            scale = scale * lib.textureScales[symbol]; // NEW
+        }
+        const klass :Class = Class(lib.swf.getSymbol(symbol));
         const instance :Object = new klass();
         const ns :String = useNamespace ? lib.location + "/" : "";
         const disp :DisplayObject = (instance is BitmapData) ?
             new Bitmap(BitmapData(instance)) : DisplayObject(instance);
-        return new SwfTexture(ns + tex.symbol, disp, scale, quality);
+        return new SwfTexture(ns + symbol, disp, scale, quality);
     }
 
     public function SwfTexture (symbol :String, disp :DisplayObject, scale :Number, quality :String) {
