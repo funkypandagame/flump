@@ -25,13 +25,13 @@ public class XflMovie extends XflSymbol
         return XmlUtil.getStringAttr(xml, NAME);
     }
 
-    /** Return a Set of all the symbols this movie references. */
-    public static function getSymbolNames (mold :MovieMold) :Set {
-        var names :Set = Sets.newSetOf(String);
+    /** Return a Vector of all the symbols this movie references. */
+    public static function getSymbolNames(mold : MovieMold) : Vector.<String> {
+        var names : Vector.<String> = new Vector.<String>();
         for each (var layer :LayerMold in mold.layers) {
             if (!layer.flipbook) {
                 for each (var kf :KeyframeMold in layer.keyframes) {
-                    if (kf.ref != null) names.add(kf.ref);
+                    if (kf.ref != null) names.push(kf.ref);
                 }
             }
         }

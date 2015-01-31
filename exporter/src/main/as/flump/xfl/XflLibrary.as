@@ -13,7 +13,6 @@ import deng.fzip.FZip;
 
 import deng.fzip.FZipFile;
 
-import flash.utils.ByteArray;
 import flash.utils.Dictionary;
 
 import flump.SwfTexture;
@@ -29,25 +28,30 @@ public class XflLibrary
 
     public static const FRAME_RATE :String = "frameRate";
     public static const BACKGROUND_COLOR :String = "backgroundColor";
-
     /**
      * When an exported movie contains an unexported movie, it gets assigned a generated symbol
      * name with this prefix.
      */
     public static const IMPLICIT_PREFIX :String = "~";
-
     public var swf :LoadedSwf;
-
     public var frameRate :Number;
     public var backgroundColor :int;
-
-    // The MD5 of the published library SWF
-    public var md5 :String;
-
+    public var md5 :String;// The MD5 of the published library SWF
     public var location :String;
-
     public const movies :Vector.<MovieMold> = new <MovieMold>[];
     public const textures :Vector.<XflTexture> = new <XflTexture>[];
+    public const textureScales : Dictionary = new Dictionary();//TODO merge this into XflTexture
+
+    /** Object to symbol name for all exported textures and movies in the library */
+    protected const _moldToSymbol :Map = Maps.newMapOf(Object);
+    /** Library name to symbol or generated symbol for all textures and movies in the library */
+    protected const _libraryNameToId :Map = Maps.newMapOf(String);
+    /** Exported movies or movies used in exported movies. */
+    protected const _toPublish :Set = Sets.newSetOf(MovieMold);
+    /** Symbol or generated symbol to texture or movie. */
+    protected const _idToItem :Dictionary = new Dictionary();
+    protected const _errors :Vector.<ParseError> = new <ParseError>[];
+    private static const log :Log = Log.getLog(XflLibrary);
 
     public function XflLibrary (location :String) {
         this.location = location;
@@ -100,13 +104,12 @@ public class XflLibrary
     public function parseFlaFile(flaZip : FZip, _swf : LoadedSwf, _md5 : String) :void {
         swf = _swf;
         md5 = _md5;
+        // parse DOMDocument.xml
         const domFile :FZipFile = flaZip.getFileByName("DOMDocument.xml");
         const docXml :XML = Util.bytesToXML(domFile.content);
         frameRate = XmlUtil.getNumberAttr(docXml, FRAME_RATE, 24);
-
         const hex :String = XmlUtil.getStringAttr(docXml, BACKGROUND_COLOR, "#ffffff");
         backgroundColor = parseInt(hex.substr(1), 16);
-
         if (docXml.media != null) {
             for each (var bitmapXML :XML in docXml.media.DOMBitmapItem) {
                 if (XmlUtil.getBooleanAttr(bitmapXML, XflSymbol.EXPORT_FOR_ACTIONSCRIPT, false)) {
@@ -114,26 +117,51 @@ public class XflLibrary
                 }
             }
         }
-
         const paths :Vector.<String> = new <String>[];
         if (docXml.symbols != null) {
             for each (var symbolXmlPath :XML in docXml.symbols.Include) {
                 paths.push("LIBRARY/" + XmlUtil.getStringAttr(symbolXmlPath, "href"));
             }
         }
-
+        // parse all library files
+        // Library name to XML for movies in the XFL that are not marked for export
+        const unexportedMovies :Map = Maps.newMapOf(String);
         for each (var path :String in paths) {
             var symbolFile :FZipFile = flaZip.getFileByName(path);
-            parseLibraryFile(symbolFile.content, path);
+            const xml :XML = Util.bytesToXML(symbolFile.content);
+            if (!XflSymbol.isSymbolItem(xml)) {
+                addTopLevelError(ParseError.DEBUG, "Skipping file since its root element isn't " + XflSymbol.SYMBOL_ITEM);
+                return;
+            } else if (XmlUtil.getStringAttr(xml, XflSymbol.TYPE, "") == XflSymbol.TYPE_GRAPHIC) {
+                trace("Skipping file because symbolType=graphic", path);
+                return;
+            }
+            const isSprite :Boolean = XmlUtil.getBooleanAttr(xml, XflSymbol.IS_SPRITE, false);
+            log.debug("Parsing for library", "file", path, "isSprite", isSprite);
+            try {
+                if (isSprite) {
+                    addTexture(xml);
+                } else {
+                    // It's a movie. If it's exported, we parse it now. Else, we save it for possible parsing later.
+                    // (Un-exported movies that are not referenced will not be published.)
+                    if (XflMovie.isExported(xml)) {
+                        movies.push(XflMovie.parse(this, xml));
+                    }
+                    else {
+                        unexportedMovies.put(XflMovie.getName(xml), xml);
+                    }
+                }
+            } catch (e :Error) {
+                addTopLevelError(ParseError.CRIT, "Unable to parse " + (isSprite ? "sprite" : "movie") + " in " + path, e);
+                log.error("Unable to parse " + path, e);
+            }
         }
-
-        var movie :MovieMold = null;
         // Parse all un-exported movies that are referenced by the exported movies.
         for (var ii :int = 0; ii < movies.length; ++ii) {
-            movie = movies[ii];
-            for each (var symbolName :String in XflMovie.getSymbolNames(movie).toArray()) {
-                var xml :XML = _unexportedMovies.remove(symbolName);
-                if (xml != null) movies.push(XflMovie.parse(this, xml));
+            var movie :MovieMold = movies[ii];
+            for each (var symbolName :String in XflMovie.getSymbolNames(movie)) {
+                var movXml :XML = unexportedMovies.remove(symbolName);
+                if (movXml != null) movies.push(XflMovie.parse(this, movXml));
             }
         }
 
@@ -166,7 +194,7 @@ public class XflLibrary
         for each (var xflTexture:XflTexture in textures) {
             if (textureScales[xflTexture.symbol] == null) {
                 textureScales[xflTexture.symbol] = 1;
-                log.warning("Texture " + xflTexture.symbol + " is only used within a Sprite. You only need to export it if you want to use it directly.");
+                addError(location, ParseError.WARN, xflTexture.symbol + " is only used within a Sprite. You only need to export it if you want to use it directly.");
             }
         }
 
@@ -196,41 +224,6 @@ public class XflLibrary
                     getMaxScales(maxScales, item as MovieMold, currentMaxScale);
                 }
             }
-        }
-    }
-
-    private function parseLibraryFile(fileData :ByteArray, path :String) :void {
-        const xml :XML = Util.bytesToXML(fileData);
-        if (!XflSymbol.isSymbolItem(xml)) {
-            addTopLevelError(ParseError.DEBUG, "Skipping file since its root element isn't " + XflSymbol.SYMBOL_ITEM);
-            return;
-        } else if (XmlUtil.getStringAttr(xml, XflSymbol.TYPE, "") == XflSymbol.TYPE_GRAPHIC) {
-            trace("Skipping file because symbolType=graphic", path);
-            return;
-        }
-
-        const isSprite :Boolean = XmlUtil.getBooleanAttr(xml, XflSymbol.IS_SPRITE, false);
-        log.debug("Parsing for library", "file", path, "isSprite", isSprite);
-        try {
-            if (isSprite) {
-                // if "export in first frame" is not set, we won't be able to load the texture
-                // from the swf.
-                // TODO: remove this restriction by loading the entire swf before reading textures?
-                if (!XmlUtil.getBooleanAttr(xml, XflSymbol.EXPORT_IN_FIRST_FRAME, true)) {
-                    addError(location + ":" + XmlUtil.getStringAttr(xml, XflSymbol.EXPORT_CLASS_NAME), ParseError.CRIT, "\"Export in frame 1\" must be set");
-                    return;
-                }
-                addTexture(xml);
-            } else {
-                // It's a movie. If it's exported, we parse it now.
-                // Else, we save it for possible parsing later.
-                // (Un-exported movies that are not referenced will not be published.)
-                if (XflMovie.isExported(xml)) movies.push(XflMovie.parse(this, xml));
-                else _unexportedMovies.put(XflMovie.getName(xml), xml);
-            }
-        } catch (e :Error) {
-            addTopLevelError(ParseError.CRIT, "Unable to parse " + (isSprite ? "sprite" : "movie") + " in " + path, e);
-            log.error("Unable to parse " + path, e);
         }
     }
 
@@ -299,26 +292,6 @@ public class XflLibrary
         textures.push(tex);
     }
 
-    /** Library name to XML for movies in the XFL that are not marked for export */
-    protected const _unexportedMovies :Map = Maps.newMapOf(String);
-
-    /** Object to symbol name for all exported textures and movies in the library */
-    protected const _moldToSymbol :Map = Maps.newMapOf(Object);
-
-    /** Library name to symbol or generated symbol for all textures and movies in the library */
-    protected const _libraryNameToId :Map = Maps.newMapOf(String);
-
-    /** Exported movies or movies used in exported movies. */
-    protected const _toPublish :Set = Sets.newSetOf(MovieMold);
-
-    public const textureScales : Dictionary = new Dictionary();
-
-    /** Symbol or generated symbol to texture or movie. */
-    protected const _idToItem :Dictionary = new Dictionary();
-
-    protected const _errors :Vector.<ParseError> = new <ParseError>[];
-
-    private static const log :Log = Log.getLog(XflLibrary);
 }
 }
 
