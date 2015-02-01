@@ -42,18 +42,18 @@ public class SwfTexture
         return new SwfTexture(name, clip, scale, quality);
     }
 
-    public static function fromTexture (lib :XflLibrary, symbol : String,
+    public static function fromTexture (lib :XflLibrary, tex : XflTexture,
             quality :String = StageQuality.BEST, scale :Number = 1,
             useNamespace :Boolean = false) :SwfTexture {
 
-        scale = scale * lib.textureScales[symbol];
+        scale = scale * tex.scale;
         
-        const klass :Class = Class(lib.swf.getSymbol(symbol));
+        const klass :Class = Class(lib.swf.getSymbol(tex.symbol));
         const instance :Object = new klass();
         const ns :String = useNamespace ? lib.location + "/" : "";
         const disp :DisplayObject = (instance is BitmapData) ?
             new Bitmap(BitmapData(instance)) : DisplayObject(instance);
-        return new SwfTexture(ns + symbol, disp, scale, quality);
+        return new SwfTexture(ns + tex.symbol, disp, scale, quality);
     }
 
     public function SwfTexture (symbol :String, disp :DisplayObject, scale :Number, quality :String) {

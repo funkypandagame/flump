@@ -40,7 +40,6 @@ public class XflLibrary
     public var location :String;
     public const movies :Vector.<MovieMold> = new <MovieMold>[];
     public const textures :Vector.<XflTexture> = new <XflTexture>[];
-    public const textureScales : Dictionary = new Dictionary();//TODO merge this into XflTexture
 
     /** Object to symbol name for all exported textures and movies in the library */
     protected const _moldToSymbol :Map = Maps.newMapOf(Object);
@@ -124,17 +123,16 @@ public class XflLibrary
             }
         }
         // parse all library files
-        // Library name to XML for movies in the XFL that are not marked for export
         const unexportedMovies :Map = Maps.newMapOf(String);
         for each (var path :String in paths) {
             var symbolFile :FZipFile = flaZip.getFileByName(path);
             const xml :XML = Util.bytesToXML(symbolFile.content);
             if (!XflSymbol.isSymbolItem(xml)) {
                 addTopLevelError(ParseError.DEBUG, "Skipping file since its root element isn't " + XflSymbol.SYMBOL_ITEM);
-                return;
+                continue;
             } else if (XmlUtil.getStringAttr(xml, XflSymbol.TYPE, "") == XflSymbol.TYPE_GRAPHIC) {
                 trace("Skipping file because symbolType=graphic", path);
-                return;
+                continue;
             }
             const isSprite :Boolean = XmlUtil.getBooleanAttr(xml, XflSymbol.IS_SPRITE, false);
             log.debug("Parsing for library", "file", path, "isSprite", isSprite);
@@ -172,17 +170,13 @@ public class XflLibrary
         }
 
         // Find out max scale for each texture
-        var maxScales : Dictionary = new Dictionary();
         for each (movie in movies) {
-            getMaxScales(maxScales, movie, 1);
+            getMaxScales(movie, 1);
         }
-        // Scale them up to their maximum used scale, adjust scales of the symbols where they are used
-        for (var key : * in maxScales) {
-            var tex : XflTexture = key as XflTexture;
-            var item : TextureScale = maxScales[tex];
-            var maxScale : Number = item.scale;
-            textureScales[tex.symbol] = maxScale;
-            for (var moldObject : * in item.keyframes) {
+        // Scale the textures up to their maximum used scale, adjust scales of the symbols where they are used
+        for each (var texture:XflTexture in textures) {
+            var maxScale : Number = texture.scale;
+            for (var moldObject : * in texture.keyframes) {
                 var mold : KeyframeMold = moldObject as KeyframeMold;
                 mold.scaleX = mold.scaleX / maxScale;
                 mold.scaleY = mold.scaleY / maxScale;
@@ -192,8 +186,12 @@ public class XflLibrary
         }
 
         for each (var xflTexture:XflTexture in textures) {
-            if (textureScales[xflTexture.symbol] == null) {
-                textureScales[xflTexture.symbol] = 1;
+            var isUsedByMovie : Boolean = false;
+            for each (var boolValue : Boolean in xflTexture.keyframes) {
+                isUsedByMovie = true;
+                break;
+            }
+            if (isUsedByMovie == false) {
                 addError(location, ParseError.WARN, xflTexture.symbol + " is only used within a Sprite. You only need to export it if you want to use it directly.");
             }
         }
@@ -206,22 +204,17 @@ public class XflLibrary
         }
     }
 
-    private function getMaxScales(maxScales : Dictionary, movie : MovieMold, currentScale : Number) : void {
+    private function getMaxScales(movie : MovieMold, currentScale : Number) : void {
         for each (var layer:LayerMold in movie.layers) {
             for each (var kf:KeyframeMold in layer.keyframes) {
                 var currentMaxScale : Number = Math.max(Math.abs(kf.scaleX * currentScale), Math.abs(kf.scaleY * currentScale));
                 var item : Object = _idToItem[kf.ref];
                 if (item is XflTexture) {
-                    if (maxScales[item]) {
-                        TextureScale(maxScales[item]).scale = Math.max(currentMaxScale, maxScales[item].scale);
-                        TextureScale(maxScales[item]).keyframes[kf] = true;
-                    } else {
-                        var ts : TextureScale = new TextureScale(currentMaxScale);
-                        ts.keyframes[kf] = true;
-                        maxScales[item] = ts;
-                    }
+                    var tex : XflTexture = item as XflTexture;
+                    tex.scale = Math.max(currentMaxScale, tex.scale);
+                    tex.keyframes[kf] = true;
                 } else if (item is MovieMold)  {
-                    getMaxScales(maxScales, item as MovieMold, currentMaxScale);
+                    getMaxScales(item as MovieMold, currentMaxScale);
                 }
             }
         }
@@ -247,7 +240,7 @@ public class XflLibrary
                     } else if (item is XflTexture) {
                         const tex :XflTexture = XflTexture(item);
                         try {
-                            swfTexture = SwfTexture.fromTexture(this, tex.symbol);
+                            swfTexture = SwfTexture.fromTexture(this, tex);
                         } catch (e :Error) {
                             addTopLevelError(ParseError.CRIT, "Error creating texture '" + tex.symbol + "'");
                             swfTexture = null;
@@ -293,16 +286,4 @@ public class XflLibrary
     }
 
 }
-}
-
-import flash.utils.Dictionary;
-
-class TextureScale {
-
-    public var scale : Number;
-    public var keyframes : Dictionary = new Dictionary();
-
-    public function TextureScale(_scale : Number) {
-        scale = _scale;
-    }
 }
