@@ -1,0 +1,84 @@
+<s:Window xmlns:fx="http://ns.adobe.com/mxml/2009"
+        xmlns:s="library://ns.adobe.com/flex/spark" xmlns:mx="library://ns.adobe.com/flex/mx"
+        creationComplete="init();"
+        renderMode="direct"
+        showStatusBar="false"
+        title="Preview"
+        skinClass="flump.export.view.AnimPreviewWindowSkin"
+        width="680" height="660">
+
+    <fx:Script>
+        <![CDATA[
+
+            import starling.core.Starling;
+            import starling.display.Sprite;
+
+        public var started :Function;
+
+        private function init () :void {
+          nativeWindow.x = 0;
+          nativeWindow.y = 0;
+
+          _starling = new Starling(starling.display.Sprite, nativeWindow.stage);
+          _starling.juggler.delayCall(function() :void { started(_starling.stage.getChildAt(0)) }, 0);
+          _starling.showStats = true;
+          _starling.start();
+
+          nativeWindow.stage.addEventListener(Event.RESIZE, function (..._) :void {
+            var w :int = previewGroup.width;
+            var h :int = previewGroup.height;
+            _starling.viewPort = new Rectangle(0, 0, w, h);
+            _starling.stage.stageWidth = w;
+            _starling.stage.stageHeight = h;
+          });
+
+          addEventListener(Event.CLOSING, function (..._) :void {
+              _starling.dispose();
+          });
+        }
+
+        protected var _starling :Starling;
+
+        ]]>
+    </fx:Script>
+
+    <s:HGroup width="100%" height="100%" >
+
+        <s:Group width="100%" height="100%" id="previewGroup" />
+
+        <s:VGroup width="300" height="100%">
+            <s:DataGrid id="movies" height="50%" width="100%">
+                <s:typicalItem>
+                    <s:DataItem movie="multiple/segment/movie" memory="12345678" drawn="1234532"/>
+                </s:typicalItem>
+                <s:columns>
+                    <s:ArrayList>
+                        <s:GridColumn dataField="movie" headerText="Movie"/>
+                        <s:GridColumn id="movieMemory" dataField="memory" headerText="Memory"/>
+                        <s:GridColumn id="maxDrawn" dataField="drawn" headerText="Max Drawn"/>
+                    </s:ArrayList>
+                </s:columns>
+                <mx:ArrayCollection/>
+            </s:DataGrid>
+            <s:DataGrid id="textures" height="50%" width="100%">
+                <s:typicalItem>
+                    <s:DataItem texture="multiple/segment/movie" memory="123456"/>
+                </s:typicalItem>
+                <s:columns>
+                    <s:ArrayList>
+                        <s:GridColumn dataField="texture" headerText="Texture"/>
+                        <s:GridColumn id="textureMemory" dataField="memory" headerText="Memory"/>
+                    </s:ArrayList>
+                </s:columns>
+                <mx:ArrayCollection/>
+            </s:DataGrid>
+            <s:HGroup width="100%">
+                <s:Label fontWeight="bold">Total memory:</s:Label><s:Label id="totalValue"/>
+                <s:HGroup width="100%" horizontalAlign="right">
+                    <s:Button id="showAtlas" label="Show Atlas"/>
+                </s:HGroup>
+            </s:HGroup>
+        </s:VGroup>
+    </s:HGroup>
+
+</s:Window>

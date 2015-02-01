@@ -1,0 +1,71 @@
+<!--
+
+  Licensed to the Apache Software Foundation (ASF) under one or more
+  contributor license agreements.  See the NOTICE file distributed with
+  this work for additional information regarding copyright ownership.
+  The ASF licenses this file to You under the Apache License, Version 2.0
+  (the "License"); you may not use this file except in compliance with
+  the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+
+-->
+<!--- A skin class for the Spark WindowedApplication component.
+ This class defines the Flex chrome which includes a border, status bar,
+ gripper button, title bar, and title bar buttons.
+
+ <p>You can either use  system chrome, the FlexChromSkin class, or
+ the WindowedApplicationSkin class to define the appearance of
+ the WindowedApplication and Window containers.
+ To use the FlexChromSkin class with the WindowedApplication container,
+ set <code>systemChrome</code> to "none"
+ in the application's .xml file, and set the <code>skinClass</code> style to
+ spark.skins.spark.FlexChromSkin.
+ To use the FlexChromSkin class with the Window container,
+ set the <code>Window.systemChrome</code> property to "none",
+ and set the <code>skinClass</code> style to
+ spark.skins.spark.FlexChromSkin.</p>
+
+ @see spark.components.WindowedApplication
+
+ @langversion 3.0
+ @playerversion Flash 10
+ @playerversion AIR 1.5
+ @productversion Flex 4
+-->
+<s:SparkSkin xmlns:fx="http://ns.adobe.com/mxml/2009" xmlns:s="library://ns.adobe.com/flex/spark"
+             xmlns:fb="http://ns.adobe.com/flashbuilder/2009" alpha.disabledGroup="0.5" >
+
+    <fx:Metadata>
+        /**
+         * @copy spark.skins.spark.ApplicationSkin#hostComponent
+         */
+        [HostComponent("Object")]
+    </fx:Metadata>
+
+    <s:states>
+        <s:State name="normal" />
+        <s:State name="disabled" stateGroups="disabledGroup" />
+        <s:State name="normalAndInactive" stateGroups="inactiveGroup" />
+        <s:State name="disabledAndInactive" stateGroups="disabledGroup, inactiveGroup" />
+    </s:states>
+
+
+    <!-- layer 2: titlebar + content + status bar -->
+    <s:Group left="1" right="1" top="1" bottom="1" minHeight="24" minWidth="0" >
+        <s:layout>
+            <s:VerticalLayout gap="0"/>
+        </s:layout>
+        <!-- content -->
+        <!--- @copy spark.components.SkinnableContainer#contentGroup -->
+        <s:Group id="contentGroup" width="100%" height="100%" minHeight="0" minWidth="0"/>
+
+    </s:Group>
+
+</s:SparkSkin>

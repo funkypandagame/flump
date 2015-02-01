@@ -18,6 +18,8 @@ import flash.utils.IDataOutput;
 
 import flump.executor.Executor;
 import flump.executor.Future;
+import flump.export.view.ProjectWindow;
+import flump.export.view.UnsavedChangesWindow;
 import flump.xfl.ParseError;
 import flump.xfl.XflLibrary;
 
@@ -72,7 +74,7 @@ public class ProjectController extends ExportController
         _win.reload.addEventListener(MouseEvent.CLICK, F.bind(reloadNow));
 
         // Export
-        _win.export.addEventListener(MouseEvent.CLICK, function (..._) :void {
+        _win.exportButton.addEventListener(MouseEvent.CLICK, function (..._) :void {
             for each (var status :DocStatus in _flashDocsGrid.selectedItems) {
                 exportFlashDocument(status);
             }
@@ -292,7 +294,7 @@ public class ProjectController extends ExportController
         _win.exportAll.label = hasCombined ? "Export Combined" : "Export All";
         checkValid();
         _win.exportModified.enabled = !hasCombined;
-        _win.export.enabled = !hasCombined;
+        _win.exportButton.enabled = !hasCombined;
 
         updateWindowTitle();
     }
@@ -310,7 +312,7 @@ public class ProjectController extends ExportController
     }
 
     protected function onSelectedItemChanged (..._) :void {
-        _win.export.enabled = !hasCombinedExportConfig() && _exportChooser.dir != null &&
+        _win.exportButton.enabled = !hasCombinedExportConfig() && _exportChooser.dir != null &&
             _flashDocsGrid.selectionLength > 0 &&
             _flashDocsGrid.selectedItems.some(function (status :DocStatus, ..._) :Boolean {
                 return status.isValid;

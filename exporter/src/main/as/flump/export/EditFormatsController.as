@@ -5,6 +5,8 @@ package flump.export {
 
 import flash.events.MouseEvent;
 
+import flump.export.view.EditFormatsWindow;
+
 import mx.collections.ArrayList;
 import mx.events.CollectionEvent;
 

@@ -16,6 +16,8 @@ import flump.display.Movie;
 import flump.TextFieldUtil;
 import flump.Util;
 import flump.export.texturepacker.TexturePacker;
+import flump.export.view.AnimPreviewWindow;
+import flump.export.view.AtlasPreviewWindow;
 import flump.mold.MovieMold;
 import flump.xfl.XflLibrary;
 import flump.xfl.XflTexture;
@@ -36,15 +38,8 @@ public class PreviewController
         _lib = lib;
         _project = project;
 
-        if (_controlsWindow == null || _controlsWindow.closed) {
-            createControlsWindow();
-        } else {
-            _controlsWindow.activate();
-        }
-
         if (_animPreviewWindow == null || _animPreviewWindow.closed) {
             createAnimWindow();
-
         } else {
             _animPreviewWindow.activate();
             showInternal();
@@ -61,24 +56,19 @@ public class PreviewController
             showInternal();
         };
         _animPreviewWindow.open();
-    }
 
-    protected function createControlsWindow () :void {
-        _controlsWindow = new PreviewControlsWindow();
-        _controlsWindow.open();
+        _animPreviewWindow.movies.addEventListener(GridSelectionEvent.SELECTION_CHANGE,
+                function (..._) :void {
+                    _animPreviewWindow.textures.selectedIndex = -1;
+                    displayLibraryItem(_animPreviewWindow.movies.selectedItem.movie);
+                });
+        _animPreviewWindow.textures.addEventListener(GridSelectionEvent.SELECTION_CHANGE,
+                function (..._) :void {
+                    _animPreviewWindow.movies.selectedIndex = -1;
+                    displayLibraryItem(_animPreviewWindow.textures.selectedItem.texture);
+                });
 
-        _controlsWindow.movies.addEventListener(GridSelectionEvent.SELECTION_CHANGE,
-            function (..._) :void {
-                _controlsWindow.textures.selectedIndex = -1;
-                displayLibraryItem(_controlsWindow.movies.selectedItem.movie);
-            });
-        _controlsWindow.textures.addEventListener(GridSelectionEvent.SELECTION_CHANGE,
-            function (..._) :void {
-                _controlsWindow.movies.selectedIndex = -1;
-                displayLibraryItem(_controlsWindow.textures.selectedItem.texture);
-            });
-
-        _controlsWindow.showAtlas.addEventListener(MouseEvent.CLICK, function (..._) :void {
+        _animPreviewWindow.showAtlas.addEventListener(MouseEvent.CLICK, function (..._) :void {
             if (_atlasPreviewWindow == null || _atlasPreviewWindow.closed) {
                 createAtlasWindow();
             } else {
@@ -126,6 +116,9 @@ public class PreviewController
             ErrorWindowMgr.showErrorPopup("Error", err.toString(), _atlasPreviewWindow);
             return;
         }
+
+        var atlasSize :Number = 0;
+        var atlasUsed :Number = 0;
         const sprite :flash.display.Sprite = new flash.display.Sprite();
         for (var ii :int = 0; ii < atlases.length; ++ii) {
             var atlas :Atlas = atlases[ii];
@@ -149,7 +142,13 @@ public class PreviewController
             atlasSprite.graphics.drawRect(0, 0, w, h);
             atlasSprite.y = sprite.height;
             sprite.addChild(atlasSprite);
+
+            atlasSize += atlas.area;
+            atlasUsed += atlas.used;
         }
+        const percentFormatter :NumberFormatter = new NumberFormatter();
+        percentFormatter.fractionalDigits = 2;
+        _atlasPreviewWindow.atlasWasteValue.text = percentFormatter.format((1.0 - (atlasUsed/atlasSize)) * 100) + "%";
 
         const uic :UIComponent = new UIComponent();
         uic.addChild(sprite);
@@ -162,9 +161,6 @@ public class PreviewController
         // new elements are added.
         group.width = sprite.width;
         group.height = sprite.height;
-
-        //_atlasPreviewWindow.maxWidth = width;
-        //_atlasPreviewWindow.maxHeight = height;
     }
 
     protected function showInternal () :void {
@@ -180,8 +176,8 @@ public class PreviewController
         intFormatter.fractionalDigits = 0;
 
         // Use a labelFunction so column sorting works as expected
-        _controlsWindow.movieMemory.labelFunction = formatMemory;
-        _controlsWindow.textureMemory.labelFunction = formatMemory;
+        _animPreviewWindow.movieMemory.labelFunction = formatMemory;
+        _animPreviewWindow.textureMemory.labelFunction = formatMemory;
 
         // All explicitly exported movies
         const previewMovies :Vector.<MovieMold> =
@@ -189,9 +185,9 @@ public class PreviewController
                 return _lib.isExported(movie);
             });
 
-        _controlsWindow.movies.dataProvider.removeAll();
+        _animPreviewWindow.movies.dataProvider.removeAll();
         for each (var movie :MovieMold in previewMovies) {
-            _controlsWindow.movies.dataProvider.addItem({
+            _animPreviewWindow.movies.dataProvider.addItem({
                 movie: movie.id,
                 memory: _creator.getMemoryUsage(movie.id),
                 drawn: _creator.getMaxDrawn(movie.id)
@@ -199,27 +195,18 @@ public class PreviewController
         }
 
         var totalUsage :int = 0;
-        _controlsWindow.textures.dataProvider.removeAll();
+        _animPreviewWindow.textures.dataProvider.removeAll();
         for each (var tex :XflTexture in _lib.textures) {
             var itemUsage :int = _creator.getMemoryUsage(tex.symbol);
             totalUsage += itemUsage;
-            _controlsWindow.textures.dataProvider.addItem({texture: tex.symbol, memory: itemUsage});
+            _animPreviewWindow.textures.dataProvider.addItem({texture: tex.symbol, memory: itemUsage});
         }
-        _controlsWindow.totalValue.text = formatMemory({memory: totalUsage});
+        _animPreviewWindow.totalValue.text = formatMemory({memory: totalUsage});
 
-        var atlasSize :Number = 0;
-        var atlasUsed :Number = 0;
-        for each (var atlas :Atlas in TexturePacker.withLib(_lib).createAtlases()) {
-            atlasSize += atlas.area;
-            atlasUsed += atlas.used;
-        }
-        const percentFormatter :NumberFormatter = new NumberFormatter();
-        percentFormatter.fractionalDigits = 2;
-        _controlsWindow.atlasWasteValue.text = percentFormatter.format((1.0 - (atlasUsed/atlasSize)) * 100) + "%";
 
         if (previewMovies.length > 0) {
             // Play the first movie
-            _controlsWindow.movies.selectedIndex = 0;
+            _animPreviewWindow.movies.selectedIndex = 0;
             // Grumble, wish setting the index above would fire the listener
             displayLibraryItem(previewMovies[0].id);
         }
@@ -249,16 +236,15 @@ public class PreviewController
 
     protected function onAnimPreviewResize (..._) :void {
         _previewSprite.x = _originIcon.x =
-            ((_animPreviewWindow.width - _previewBounds.width) * 0.5) - _previewBounds.left;
+            ((_animPreviewWindow.previewGroup.width - _previewBounds.width) * 0.5) - _previewBounds.left;
         _previewSprite.y = _originIcon.y =
-            ((_animPreviewWindow.height - _previewBounds.height) * 0.5) - _previewBounds.top;
+            ((_animPreviewWindow.previewGroup.height - _previewBounds.height) * 0.5) - _previewBounds.top;
     }
 
     protected var _previewSprite :starling.display.DisplayObject;
     protected var _previewBounds :Rectangle;
     protected var _container :starling.display.Sprite;
     protected var _originIcon :starling.display.Sprite;
-    protected var _controlsWindow :PreviewControlsWindow;
     protected var _animPreviewWindow :AnimPreviewWindow;
     protected var _atlasPreviewWindow :AtlasPreviewWindow;
     protected var _creator :DisplayCreator;

@@ -8,6 +8,8 @@ import aspire.util.F;
 import flash.display.DisplayObject;
 import flash.events.MouseEvent;
 
+import flump.export.view.ErrorWindow;
+
 import mx.managers.PopUpManager;
 
 public class ErrorWindowMgr

@@ -3,7 +3,7 @@
   xmlns:mx="library://ns.adobe.com/flex/mx"
   width="1024" height="668" showStatusBar="false">
   <s:layout>
-    <s:VerticalLayout paddingLeft="20" paddingTop="20" paddingRight="20" paddingBottom="20"/>
+    <s:VerticalLayout paddingLeft="10" paddingTop="10" paddingRight="10" paddingBottom="10"/>
   </s:layout>
   <s:HGroup height="300" width="100%">
     <s:DataGrid id="libraries" width="480" height="100%">
@@ -54,7 +54,7 @@
           <s:HGroup width="500" horizontalAlign="left">
             <s:Label id="selectedItem" width="303"/>
             <s:Button id="preview" label="Preview" enabled="false"/>
-            <s:Button id="export" label="Export" enabled="false"/>
+            <s:Button id="exportButton" label="Export" enabled="false"/>
           </s:HGroup>
         </s:FormItem>
     </s:VGroup>
