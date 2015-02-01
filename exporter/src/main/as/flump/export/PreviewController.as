@@ -100,7 +100,8 @@ public class PreviewController
         const exportConf :ExportConf =
             (_project.exports.length > 0 ? _project.exports[0] : new ExportConf());
 
-        const scale :Number = MathUtil.clamp(Number(_atlasPreviewWindow.scale.text), 0.001, 1);
+        const scale :Number = MathUtil.clamp(Number(_atlasPreviewWindow.scale.text), 0.001, 10);
+        _atlasPreviewWindow.scale.text = scale.toString();
         const border :int = Math.max(0, int(_atlasPreviewWindow.border.text));
         const optimizeStrategy :String = _atlasPreviewWindow.optimizeBox.selectedItem;
         try {
