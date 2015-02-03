@@ -40,26 +40,29 @@ internal class Layer
             // Create the display objects for each keyframe.
             // If multiple consecutive keyframes refer to the same library item,
             // we reuse that item across those frames.
-            _displays = new Vector.<DisplayObject>(_keyframes.length, true);
+            _displays = new Vector.<DisplayObject>(_keyframes.length, true); //TODO: make this a Dictionary to prevent multiple creation of the same asset
             for (ii = 0; ii < _keyframes.length; ++ii) {
                 var kf :KeyframeMold = _keyframes[ii];
                 var display :DisplayObject = null;
                 if (ii > 0 && _keyframes[ii - 1].ref == kf.ref) {
                     display = _displays[ii - 1];
-                } else if (kf.ref == null) {
-                    display = new Sprite();
                 } else {
-                    display = library.createDisplayObject(kf.ref);
+                    if (kf.ref == null) {
+                        //display = new Sprite();
+                    } else {
+                        display = library.createDisplayObject(kf.ref);
+                        display.visible = false;
+                        _movie.addChild(display);
+                    }
                 }
                 _displays[ii] = display;
-                display.visible = false;
-                _movie.addChild(display);
             }
             _currentDisplay = _displays[0];
-            _currentDisplay.visible = true;
+            //_currentDisplay.visible = true;
         }
-
-        _currentDisplay.name = _name;
+        if (_currentDisplay) {
+            _currentDisplay.name = _name;
+        }
     }
 
     /** Called by Movie when we loop. */
@@ -81,8 +84,10 @@ internal class Layer
             return;
 
         } else if (frame >= _numFrames) {
-            // We've overshot our final frame. Hide the display
-            _currentDisplay.visible = false;
+            if (_currentDisplay) {
+                // We've overshot our final frame. Hide the display
+                _currentDisplay.visible = false;
+            }
             // keep our keyframeIdx updated
             _keyframeIdx = _keyframes.length - 1;
             _needsKeyframeUpdate = true;
@@ -95,21 +100,27 @@ internal class Layer
         }
 
         if (_needsKeyframeUpdate) {
+            _needsKeyframeUpdate = false;
             // Swap in the proper DisplayObject for this keyframe.
             const disp :DisplayObject = _displays[_keyframeIdx];
             if (_currentDisplay != disp) {
-                _currentDisplay.name = null;
-                _currentDisplay.visible = false;
-                // If we're swapping in a Movie, reset its timeline.
-                if (disp is Movie) {
-                    Movie(disp).addedToLayer();
+                if (_currentDisplay) {
+                    _currentDisplay.name = null;
+                    _currentDisplay.visible = false;
+                }
+                if (disp) {
+                    // If we're swapping in a Movie, reset its timeline.
+                    if (disp is Movie) {
+                        Movie(disp).addedToLayer();
+                    }
+                    disp.name = _name;
                 }
                 _currentDisplay = disp;
-                _currentDisplay.name = _name;
             }
         }
-        _needsKeyframeUpdate = false;
-
+        if (_currentDisplay == null) {
+            return;
+        }
         const kf :KeyframeMold = _keyframes[_keyframeIdx];
         const layer :DisplayObject = _currentDisplay;
         if (_keyframeIdx == _keyframes.length - 1 || kf.index == frame || !kf.tweened) {

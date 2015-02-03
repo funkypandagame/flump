@@ -62,8 +62,8 @@
   <s:DataGrid id="errors" width="100%" height="100%">
     <s:typicalItem>
       <s:DataItem severity="Critical"
-        location="multiple/segment/nested/path/of/some/depth:symbolName:layerName:12"
-        message="An error message that's hopefully a normal length give or take a couple words"/>
+        location="multiple/segment/nested/path:symbolName:layerName:12"
+        message="An error message that's hopefully a normal length give or take a couple words."/>
     </s:typicalItem>
     <s:columns>
       <s:ArrayList>
