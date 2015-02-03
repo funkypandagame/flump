@@ -38,8 +38,7 @@ internal class Layer
             _movie.addChild(_currentDisplay);
         } else {
             // Create the display objects for each keyframe.
-            // If multiple consecutive keyframes refer to the same library item,
-            // we reuse that item across those frames.
+            // If multiple consecutive keyframes refer to the same library item, we reuse that item across those frames.
             _displays = new Vector.<DisplayObject>(_keyframes.length, true); //TODO: make this a Dictionary to prevent multiple creation of the same asset
             for (ii = 0; ii < _keyframes.length; ++ii) {
                 var kf :KeyframeMold = _keyframes[ii];
@@ -47,9 +46,7 @@ internal class Layer
                 if (ii > 0 && _keyframes[ii - 1].ref == kf.ref) {
                     display = _displays[ii - 1];
                 } else {
-                    if (kf.ref == null) {
-                        //display = new Sprite();
-                    } else {
+                    if (kf.ref != null) {
                         display = library.createDisplayObject(kf.ref);
                         display.visible = false;
                         _movie.addChild(display);
@@ -58,7 +55,6 @@ internal class Layer
                 _displays[ii] = display;
             }
             _currentDisplay = _displays[0];
-            //_currentDisplay.visible = true;
         }
         if (_currentDisplay) {
             _currentDisplay.name = _name;
