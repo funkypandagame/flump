@@ -17,6 +17,7 @@
                     <fx:String>JSON</fx:String>
                     <fx:String>JSONZip</fx:String>
                     <fx:String>XML</fx:String>
+                    <fx:String>ByteArrayZip</fx:String>
                   </s:ArrayList>
                 </s:dataProvider>
               </s:ComboBoxGridItemEditor>

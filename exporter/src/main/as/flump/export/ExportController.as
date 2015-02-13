@@ -8,6 +8,7 @@ import flash.filesystem.File;
 
 import flump.executor.Executor;
 import flump.executor.Future;
+import flump.export.formats.JSONFormat;
 import flump.xfl.ParseError;
 import flump.xfl.XflLibrary;
 

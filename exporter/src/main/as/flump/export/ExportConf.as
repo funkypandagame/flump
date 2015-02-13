@@ -11,6 +11,14 @@ import aspire.util.StringUtil;
 import flash.display.StageQuality;
 import flash.filesystem.File;
 
+import flump.export.formats.ByteArrayZipFormat;
+
+import flump.export.formats.JSONFormat;
+
+import flump.export.formats.JSONZipFormat;
+import flump.export.formats.PublishFormat;
+import flump.export.formats.XMLFormat;
+
 import flump.mold.AtlasMold;
 import flump.mold.optional;
 import flump.mold.require;
@@ -93,6 +101,7 @@ public class ExportConf
             case JSONFormat.NAME.toLowerCase(): formatClass = JSONFormat; break;
             case JSONZipFormat.NAME.toLowerCase(): formatClass = JSONZipFormat; break;
             case XMLFormat.NAME.toLowerCase(): formatClass = XMLFormat; break;
+            case ByteArrayZipFormat.NAME.toLowerCase(): formatClass = ByteArrayZipFormat; break;
             default:
                 log.error("Invalid publish format", "name", format);
                 formatClass = JSONZipFormat;

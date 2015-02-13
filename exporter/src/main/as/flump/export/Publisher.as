@@ -7,6 +7,8 @@ import aspire.util.Log;
 
 import flash.filesystem.File;
 
+import flump.export.formats.PublishFormat;
+
 import flump.xfl.XflLibrary;
 
 public class Publisher

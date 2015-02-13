@@ -6,11 +6,11 @@ package flump.test {
 import flash.filesystem.File;
 
 import flump.export.ExportConf;
-import flump.export.JSONFormat;
+import flump.export.formats.JSONFormat;
 import flump.export.ProjectConf;
 import flump.export.Publisher;
-import flump.export.JSONZipFormat;
-import flump.export.XMLFormat;
+import flump.export.formats.JSONZipFormat;
+import flump.export.formats.XMLFormat;
 import flump.xfl.XflLibrary;
 
 public class PublishTest

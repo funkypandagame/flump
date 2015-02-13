@@ -197,6 +197,7 @@ public class LibraryLoader
 
     /** @private */
     public static const LIBRARY_LOCATION :String = "library.json";
+    public static const BYTEARRAY_LIBRARY_LOCATION :String = "library.bytearray";
     /** @private */
     public static const MD5_LOCATION :String = "md5";
     /** @private */
