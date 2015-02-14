@@ -1,7 +1,4 @@
-//
-// Flump - Copyright 2013 Flump Authors
-
-package flump.export {
+package flump.export.formats {
 
 import flash.filesystem.File;
 import flash.utils.ByteArray;
@@ -11,15 +8,19 @@ import deng.fzip.FZip;
 import deng.fzip.FZipFile;
 
 import flump.display.LibraryLoader;
+import flump.export.Atlas;
+import flump.export.AtlasUtil;
+import flump.export.ExportConf;
+import flump.export.Files;
 import flump.xfl.XflLibrary;
 
-public class JSONZipFormat extends PublishFormat
+public class ByteArrayZipFormat extends PublishFormat
 {
-    public static const NAME :String = "JSONZip";
+    public static const NAME :String = "ByteArrayZip";
 
     public var outputFile :File;
 
-    public function JSONZipFormat (destDir :File, libs :Vector.<XflLibrary>, conf :ExportConf,
+    public function ByteArrayZipFormat (destDir :File, libs :Vector.<XflLibrary>, conf :ExportConf,
             projectName :String) {
         super(destDir, libs, conf, projectName);
         if (conf.name != null) {
@@ -42,27 +43,31 @@ public class JSONZipFormat extends PublishFormat
     override public function publish() :void {
         const zip :FZip = new FZip();
 
-        function addToZip(name :String, contentWriter :Function) :void {
-            const bytes :ByteArray = new ByteArray();
-            contentWriter(bytes);
-            zip.addFile(name, bytes);
-        }
-
         const atlases :Vector.<Atlas> = createAtlases();
+
         for each (var atlas :Atlas in atlases) {
-            addToZip(atlas.filename, function (b :ByteArray) :void { AtlasUtil.writePNG(atlas, b); });
+            var bytes :ByteArray = new ByteArray();
+            AtlasUtil.writePNG(atlas, bytes);
+            zip.addFile(atlas.filename, bytes);
         }
-        addToZip(LibraryLoader.LIBRARY_LOCATION, function (b :ByteArray) :void {
-            b.writeUTFBytes(toJSONString(createMold(atlases)));
-        });
-        addToZip(LibraryLoader.MD5_LOCATION,
-            function (b :ByteArray) :void { b.writeUTFBytes(md5); });
-        addToZip(LibraryLoader.VERSION_LOCATION,
-            function (b :ByteArray) :void { b.writeUTFBytes(LibraryLoader.VERSION); });
+        LibraryLoader.registerByteArrayClassAliases();
+        var ba : ByteArray = new ByteArray();
+        ba.writeObject(createMold(atlases));
+        zip.addFile(LibraryLoader.BYTEARRAY_LIBRARY_LOCATION, ba);
+
+        addToZip(zip, LibraryLoader.MD5_LOCATION, md5);
+
+        addToZip(zip, LibraryLoader.VERSION_LOCATION, LibraryLoader.VERSION);
 
         Files.write(outputFile, function (out :IDataOutput) :void {
             zip.serialize(out, /*includeAdler32=*/true);
         });
+    }
+
+    private static function addToZip(zip : FZip, name :String, data : String) :void {
+        const bytes :ByteArray = new ByteArray();
+        bytes.writeUTFBytes(data);
+        zip.addFile(name, bytes);
     }
 
 }

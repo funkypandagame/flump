@@ -14,7 +14,6 @@ import flash.events.ProgressEvent;
 import flash.geom.Point;
 import flash.geom.Rectangle;
 import flash.net.URLRequest;
-import flash.net.registerClassAlias;
 import flash.utils.ByteArray;
 import flash.utils.Dictionary;
 
@@ -25,8 +24,6 @@ import flump.executor.load.ImageLoader;
 import flump.executor.load.LoadedImage;
 import flump.mold.AtlasMold;
 import flump.mold.AtlasTextureMold;
-import flump.mold.KeyframeMold;
-import flump.mold.LayerMold;
 import flump.mold.LibraryMold;
 import flump.mold.MovieMold;
 import flump.mold.TextureGroupMold;
@@ -35,6 +32,7 @@ import starling.core.Starling;
 import starling.textures.Texture;
 
 internal class Loader {
+
     public function Loader (toLoad :Object, libLoader :LibraryLoader) {
         _scaleFactor = (libLoader.scaleFactor > 0 ? libLoader.scaleFactor :
             Starling.contentScaleFactor);
@@ -67,17 +65,7 @@ internal class Loader {
             _lib = LibraryMold.fromJSON(JSON.parse(jsonString));
             _libLoader.libraryMoldLoaded.emit(_lib);
         } else if (name == LibraryLoader.BYTEARRAY_LIBRARY_LOCATION) {
-
-            // TODO move this somewhere else
-            registerClassAlias("TextureGroupMold", TextureGroupMold);
-            registerClassAlias("AtlasMold", AtlasMold);
-            registerClassAlias("AtlasTextureMold", AtlasTextureMold);
-            registerClassAlias("LibraryMold", LibraryMold);
-            registerClassAlias("MovieMold", MovieMold);
-            registerClassAlias("LayerMold", LayerMold);
-            registerClassAlias("KeyframeMold", KeyframeMold);
-            registerClassAlias("flash.geom.Point", Point);
-
+            LibraryLoader.registerByteArrayClassAliases();
             _lib = loaded.content.readObject() as LibraryMold;
             _libLoader.libraryMoldLoaded.emit(_lib);
         } else if (name.indexOf(PNG, name.length - PNG.length) != -1) {
@@ -217,5 +205,6 @@ internal class Loader {
 
     protected static const PNG :String = ".png";
     protected static const ATF :String = ".atf";
+
 }
 }

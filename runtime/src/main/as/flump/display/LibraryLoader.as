@@ -4,11 +4,20 @@
 package flump.display {
 
 import flash.events.ProgressEvent;
+import flash.geom.Point;
+import flash.geom.Rectangle;
+import flash.net.registerClassAlias;
 import flash.utils.ByteArray;
 
 import flump.executor.Executor;
 import flump.executor.Future;
+import flump.mold.AtlasMold;
+import flump.mold.AtlasTextureMold;
+import flump.mold.KeyframeMold;
+import flump.mold.LayerMold;
 import flump.mold.LibraryMold;
+import flump.mold.MovieMold;
+import flump.mold.TextureGroupMold;
 
 import react.Signal;
 
@@ -67,6 +76,27 @@ public class LibraryLoader
         scaleFactor :Number=-1) :Future {
         return new LibraryLoader().setExecutor(executor).setScaleFactor(scaleFactor)
             .loadURL(url);
+    }
+
+    /**
+     * @private
+     * calls registerClassAlias() for the classes needed to encode/decode byteArrays for
+     * animations using ByteArrayZipFormat.
+     * You don't need to call this manually.
+     */
+    public static function registerByteArrayClassAliases() : void {
+        if (!_classesRegistered) {
+            _classesRegistered = true;
+            registerClassAlias("flump.mold.TextureGroupMold", TextureGroupMold);
+            registerClassAlias("flump.mold.AtlasMold", AtlasMold);
+            registerClassAlias("flump.mold.AtlasTextureMold", AtlasTextureMold);
+            registerClassAlias("flump.mold.LibraryMold", LibraryMold);
+            registerClassAlias("flump.mold.MovieMold", MovieMold);
+            registerClassAlias("flump.mold.LayerMold", LayerMold);
+            registerClassAlias("flump.mold.KeyframeMold", KeyframeMold);
+            registerClassAlias("flash.geom.Point", Point);
+            registerClassAlias("flash.geom.Rectangle", Rectangle);
+        }
     }
 
     /**
@@ -214,5 +244,6 @@ public class LibraryLoader
     protected var _scaleFactor :Number = -1;
     protected var _generateMipMaps :Boolean = false;
     protected var _creatorFactory :CreatorFactory;
+    private static var _classesRegistered :Boolean;
 }
 }

@@ -1,7 +1,8 @@
 //
 // Flump - Copyright 2013 Flump Authors
 
-package flump.export {
+package flump.export.formats {
+import flump.export.*;
 
 import aspire.util.Preconditions;
 
