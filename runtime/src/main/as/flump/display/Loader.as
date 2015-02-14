@@ -41,6 +41,9 @@ internal class Loader {
     }
 
     public function load (future :FutureTask) :void {
+        if (_toLoad == null) {
+            throw new Error("Object to load is null or load() was already called");
+        }
         _future = future;
 
         _zip.addEventListener(Event.COMPLETE, _future.monitoredCallback(onZipLoadingComplete));
@@ -51,6 +54,7 @@ internal class Loader {
 
         if (_toLoad is String) _zip.load(new URLRequest(String(_toLoad)));
         else _zip.loadBytes(ByteArray(_toLoad));
+        _toLoad = null;
     }
 
     protected function onProgress (e :ProgressEvent) :void {
@@ -181,6 +185,13 @@ internal class Loader {
                 movie, _lib.frameRate);
         }
         _future.succeed(new LibraryImpl(_baseTextures, _creators, _lib.isNamespaced));
+        _libLoader = null;
+        _future = null;
+        _lib = null;
+        _baseTextures = null;
+        _creators = null;
+        _atlasBytes = null;
+        _pngLoaders.shutdown();
     }
 
     protected function onPngLoadingFailed (e :*) :void {
@@ -198,10 +209,10 @@ internal class Loader {
     protected var _zip :FZip = new FZip();
     protected var _lib :LibraryMold;
 
-    protected const _baseTextures :Vector.<Texture> = new <Texture>[];
-    protected const _creators :Dictionary = new Dictionary();//<name, ImageCreator/MovieCreator>
-    protected const _atlasBytes :Dictionary = new Dictionary();//<String name, ByteArray>
-    protected const _pngLoaders :Executor = new Executor(1);
+    protected var _baseTextures :Vector.<Texture> = new <Texture>[];
+    protected var _creators :Dictionary = new Dictionary();//<name, ImageCreator/MovieCreator>
+    protected var _atlasBytes :Dictionary = new Dictionary();//<String name, ByteArray>
+    protected var _pngLoaders :Executor = new Executor(1);
 
     protected static const PNG :String = ".png";
     protected static const ATF :String = ".atf";

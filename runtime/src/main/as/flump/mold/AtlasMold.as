@@ -27,13 +27,6 @@ public class AtlasMold
         return mold;
     }
 
-    public function toJSON (_:*) :Object {
-        return {
-            file: file,
-            textures: textures
-        };
-    }
-
     public function toXML () :XML {
         var xml :XML = <atlas file={file} />;
         for each (var tex :AtlasTextureMold in textures) xml.appendChild(tex.toXML());

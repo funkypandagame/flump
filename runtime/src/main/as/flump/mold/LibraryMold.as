@@ -33,16 +33,6 @@ public class LibraryMold
         return mold;
     }
 
-    public function toJSON (_:*) :Object {
-        return {
-            frameRate: frameRate,
-            md5: md5,
-            movies: movies,
-            textureGroups: textureGroups,
-            isNamespaced: isNamespaced
-        };
-    }
-
     public function bestTextureGroupForScaleFactor (scaleFactor :int) :TextureGroupMold {
         if (textureGroups.length == 0) {
             return null;

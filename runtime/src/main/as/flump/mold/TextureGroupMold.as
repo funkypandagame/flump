@@ -17,13 +17,6 @@ public class TextureGroupMold
         return mold;
     }
 
-    public function toJSON (_:*) :Object {
-        return {
-            scaleFactor: scaleFactor,
-            atlases: atlases
-        };
-    }
-
     public function toXML () :XML {
         var xml :XML = <textureGroup scaleFactor={scaleFactor}/>;
         for each (var atlas :AtlasMold in atlases) {

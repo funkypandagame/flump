@@ -62,14 +62,6 @@ public class MovieMold
         return clone;
     }
 
-    public function toJSON (_:*) :Object {
-        const json :Object = {
-            id: id,
-            layers: layers
-        };
-        return json;
-    }
-
     public function toXML () :XML {
         var xml :XML = <movie name={id}/>;
         for each (var layer :LayerMold in layers) xml.appendChild(layer.toXML());

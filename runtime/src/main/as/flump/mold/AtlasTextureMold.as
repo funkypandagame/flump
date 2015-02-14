@@ -23,17 +23,8 @@ public class AtlasTextureMold
         return mold;
     }
 
-    public function toJSON (_:*) :Object {
-        return {
-            symbol: symbol,
-            rect: [bounds.x, bounds.y, bounds.width, bounds.height],
-            origin: [origin.x, origin.y]
-        };
-    }
-
     public function toXML () :XML {
-        const json :Object = toJSON(null);
-        return <texture name={symbol} rect={json.rect} origin={json.origin}/>;
+        return <texture name={symbol} rect={[bounds.x, bounds.y, bounds.width, bounds.height]} origin={[origin.x, origin.y]}/>;
     }
 
 }

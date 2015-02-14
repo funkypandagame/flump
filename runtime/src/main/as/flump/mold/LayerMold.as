@@ -32,15 +32,6 @@ public class LayerMold
         return lastKf.index + lastKf.duration;
     }
 
-    public function toJSON (_:*) :Object {
-        var json :Object = {
-            name: name,
-            keyframes: keyframes
-        };
-        if (flipbook) json.flipbook = flipbook;
-        return json;
-    }
-
     public function toXML () :XML {
         var xml :XML = <layer name={name}/>;
         if (flipbook) xml.@flipbook = flipbook;
