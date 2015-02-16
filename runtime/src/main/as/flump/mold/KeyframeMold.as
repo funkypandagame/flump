@@ -54,13 +54,35 @@ public class KeyframeMold
     }
 
     /** True if this keyframe does not display anything. */
+    [Transient]
     public function get isEmpty () :Boolean { return this.ref == null; }
 
+    [Transient]
     public function get rotation () :Number { return skewX; }
 
     public function rotate (delta :Number) :void {
         skewX += delta;
         skewY += delta;
+    }
+
+    public function toJSON (_:*) :Object {
+        var json :Object = {
+            index: index,
+            duration: duration
+        };
+        if (ref != null) {
+            json.ref = ref;
+            if (x != 0 || y != 0) json.loc = [round(x), round(y)];
+            if (scaleX != 1 || scaleY != 1) json.scale = [round(scaleX), round(scaleY)];
+            if (skewX != 0 || skewY != 0) json.skew = [round(skewX), round(skewY)];
+            if (pivotX != 0 || pivotY != 0) json.pivot = [round(pivotX), round(pivotY)];
+            if (alpha != 1) json.alpha = round(alpha);
+            if (!visible) json.visible = visible;
+            if (!tweened) json.tweened = tweened;
+            if (ease != 0) json.ease = round(ease);
+        }
+        if (label != null) json.label = label;
+        return json;
     }
 
     public function toXML () :XML {

@@ -26,10 +26,20 @@ public class LayerMold
         return keyframes[ii - 1];
     }
 
+    [Transient]
     public function get frames () :int {
         if (keyframes.length == 0) return 0;
         const lastKf :KeyframeMold = keyframes[keyframes.length - 1];
         return lastKf.index + lastKf.duration;
+    }
+
+    public function toJSON (_:*) :Object {
+        var json :Object = {
+            name: name,
+            keyframes: keyframes
+        };
+        if (flipbook) json.flipbook = flipbook;
+        return json;
     }
 
     public function toXML () :XML {

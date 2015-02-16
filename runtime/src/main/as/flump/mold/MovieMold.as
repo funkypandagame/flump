@@ -1,6 +1,5 @@
 //
 // Flump - Copyright 2013 Flump Authors
-
 package flump.mold {
 
 import flump.display.Movie;
@@ -9,22 +8,20 @@ import flump.display.Movie;
 public class MovieMold
 {
     public var id :String;
+
     public var layers :Vector.<LayerMold> = new <LayerMold>[];
+
+    [Transient]
     public var labels :Vector.<Vector.<String>>;
 
-    public static function fromJSON (o :Object) :MovieMold {
-        const mold :MovieMold = new MovieMold();
-        mold.id = require(o, "id");
-        for each (var layer :Object in require(o, "layers")) mold.layers.push(LayerMold.fromJSON(layer));
-        return mold;
-    }
-
+    [Transient]
     public function get frames () :int {
         var frames :int = 0;
         for each (var layer :LayerMold in layers) frames = Math.max(frames, layer.frames);
         return frames;
     }
 
+    [Transient]
     public function get flipbook () :Boolean { return (layers.length > 0 && layers[0].flipbook); }
 
     public function fillLabels () :void {
@@ -49,9 +46,8 @@ public class MovieMold
         }
     }
 
-    public function scale (scale :Number) :MovieMold {
-        const clone :MovieMold = fromJSON(JSON.parse(JSON.stringify(this)));
-        for each (var layer :LayerMold in clone.layers) {
+    public function scale(scale :Number) : void {
+        for each (var layer :LayerMold in layers) {
             for each (var kf :KeyframeMold in layer.keyframes) {
                 kf.x *= scale;
                 kf.y *= scale;
@@ -59,7 +55,26 @@ public class MovieMold
                 kf.pivotY *= scale;
             }
         }
-        return clone;
+    }
+
+    // return a clone (deep copy) of this object. Note that KeyFrame rounds its values when cloning!
+    public function clone() : MovieMold {
+        return fromJSON(JSON.parse(JSON.stringify(this)));
+    }
+
+    public static function fromJSON (o :Object) :MovieMold {
+        const mold :MovieMold = new MovieMold();
+        mold.id = require(o, "id");
+        for each (var layer :Object in require(o, "layers")) mold.layers.push(LayerMold.fromJSON(layer));
+        return mold;
+    }
+
+    public function toJSON (_:*) :Object {
+        const json :Object = {
+            id: id,
+            layers: layers
+        };
+        return json;
     }
 
     public function toXML () :XML {

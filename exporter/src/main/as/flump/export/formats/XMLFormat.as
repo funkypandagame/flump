@@ -48,7 +48,9 @@ public class XMLFormat extends PublishFormat
         const prefix :String = location + "/";
         const libraryMold :LibraryMold = createMold(atlases);
         for each (var movie :MovieMold in libraryMold.movies) {
-            var movieXml :XML = movie.scale(_conf.scale).toXML();
+            var clone : MovieMold = movie.clone();
+            clone.scale(_conf.scale);
+            var movieXml :XML = clone.toXML();
             movieXml.@name = prefix + movieXml.@name;
             movieXml.@frameRate = _libs[0].frameRate;
             for each (var kf :XML in movieXml..kf) {

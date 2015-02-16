@@ -82,8 +82,8 @@ public class PublishFormat
         var useNamespaces :Boolean = _libs.length > 1;
         for each (var lib :XflLibrary in _libs) {
             for each (var movie :MovieMold in lib.publishedMovies) {
-                // movie.scale() returns a scaled clone
-                movie = movie.scale(_conf.scale);
+                movie = movie.clone();
+                movie.scale(_conf.scale);
                 mold.movies[mold.movies.length] = movie;
 
                 if (useNamespaces) {

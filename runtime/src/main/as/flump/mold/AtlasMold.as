@@ -18,6 +18,11 @@ public class AtlasMold
         return (result != null ? int(result[1]) : 1);
     }
 
+    [Transient]
+    public function get scaleFactor () :int {
+        return extractScaleFactor(file);
+    }
+
     public static function fromJSON (o :Object) :AtlasMold {
         const mold :AtlasMold = new AtlasMold();
         mold.file = require(o, "file");
@@ -27,14 +32,17 @@ public class AtlasMold
         return mold;
     }
 
+    public function toJSON (_:*) :Object {
+        return {
+            file: file,
+            textures: textures
+        };
+    }
+
     public function toXML () :XML {
         var xml :XML = <atlas file={file} />;
         for each (var tex :AtlasTextureMold in textures) xml.appendChild(tex.toXML());
         return xml;
-    }
-
-    public function get scaleFactor () :int {
-        return extractScaleFactor(file);
     }
 
     protected static const SCALE_FACTOR :RegExp = /@(\d+)x$/;
