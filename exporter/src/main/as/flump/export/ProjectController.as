@@ -240,7 +240,7 @@ public class ProjectController extends ExportController
     protected function updateWindowTitle () :void {
         var name :String = this.projectName;
         if (_projectDirty) name += "*";
-        _win.title = name;
+        _win.title = name + " - FlumpFP";
     }
 
     protected function saveConf (onSuccess :Function) :void {
