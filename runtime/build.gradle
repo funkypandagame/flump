@@ -1,0 +1,106 @@
+import org.apache.tools.ant.taskdefs.condition.Os
+
+buildscript {
+    repositories {
+        mavenLocal()
+        maven {
+            url repoManagerURL + 'repo'
+            credentials {
+                username = mavenUsername
+                password = mavenPassword
+            }
+        }
+    }
+
+    dependencies {
+        classpath group: 'org.gradlefx', name: 'gradlefx', version: '1.1'
+    }
+}
+
+apply plugin: 'gradlefx'
+apply plugin: 'ideafx'
+apply plugin: 'maven'
+
+group = 'com.threerings.flump'
+version = '1.4-FP-2015-05-11'
+type = 'swc'
+output = 'flump-runtime'
+playerVersion = '15.0'
+srcDirs	= ['src/main/as']
+
+repositories {
+    mavenLocal()
+    maven {
+        url repoManagerURL + 'repo'
+        credentials {
+            username = mavenUsername
+            password = mavenPassword
+        }
+    }
+    ivy {
+        name 'Adobe Air SDK'
+        artifactPattern  Os.isFamily(Os.FAMILY_WINDOWS) ?
+                'http://airdownload.adobe.com/air/win/download/[revision]/[module]_Compiler.[ext]' :
+                'http://airdownload.adobe.com/air/mac/download/[revision]/[module]_Compiler.[ext]'
+    }
+}
+
+dependencies {
+    airSDK group: 'com.adobe', name: 'AIRSDK', version: '15.0', ext: Os.isFamily(Os.FAMILY_WINDOWS) ? 'zip' : 'tbz2'
+
+    external 'com.gamua:starling-framework:1.6.0'
+
+    merged 'com.timconkling:react-as3:1.1'
+    merged 'deng:fzip:a5430bd'
+}
+
+additionalCompilerOptions = [
+        '-inline',
+        // AS3 metadata
+        '-keep-as3-metadata+=Inline,Embed,SWF,Transient',
+        '-debug=false',
+        '-verbose-stacktraces=true'
+]
+
+sdkAutoInstall {
+    showPrompts = false
+}
+
+///////////////////////////////////////// Wrapper
+task wrapper(type: Wrapper) {
+    group = 'Buildmaster'
+    description = 'Generates gradlew and gradlew.bat bootstrap scripts.'
+    gradleVersion = '2.1'
+    // place jar file and properties into a subdirectory to avoid root dir clutter
+    jarFile = 'gradle/wrapper/gradle.jar'
+}
+
+///////////////////////////////////////// Maven
+// this is a workaround, see https://github.com/GradleFx/GradleFx/issues/91
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            // invoke this with the -PdeployToRepoManager command line argument
+            if (project.hasProperty('deployToRepoManager')) {
+                repository(url: repoManagerURL + 'funkypanda') {
+                    authentication(userName: mavenUsername, password: mavenPassword)
+                }
+            }
+            else {
+                repository url: mavenLocal().url
+            }
+            //The publication doesn't know about our dependencies, so we have to manually add them to the pom
+            pom.withXml {
+                def dependenciesNode = asNode().appendNode('dependencies')
+                project.configurations["external"].allDependencies.each { Dependency dependency ->
+                    def dependencyNode = dependenciesNode.appendNode('dependency')
+                    dependencyNode.appendNode('groupId', dependency.group)
+                    dependencyNode.appendNode('artifactId', dependency.name)
+                    dependencyNode.appendNode('version', dependency.version)
+                    dependencyNode.appendNode('type', 'swc')
+
+                }
+            }
+        }
+    }
+}

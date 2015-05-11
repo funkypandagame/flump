@@ -17,8 +17,7 @@ import starling.display.Sprite;
  * Movie. Responsible for efficiently managing the creation and display of the DisplayObjects for
  * this layer on each frame.
  */
-internal class Layer
-    implements IAnimatable
+internal class Layer implements IAnimatable
 {
     public function Layer (movie :Movie, src :LayerMold, library :Library, flipbook :Boolean) {
         _keyframes = src.keyframes;
@@ -160,7 +159,7 @@ internal class Layer
     /** Expands the given bounds to include the bounds of this Layer's current display object. */
     internal function expandBounds (targetSpace :DisplayObject, resultRect :Rectangle) :Rectangle {
         // if no objects on this frame, do not change bounds
-        if (_keyframes[_keyframeIdx].ref == null) {
+        if (_currentDisplay == null || _keyframes[_keyframeIdx].ref == null) {
             return resultRect;
         }
 
