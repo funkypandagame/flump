@@ -48,9 +48,9 @@ repositories {
 dependencies {
     airSDK group: 'com.adobe', name: 'AIRSDK', version: '15.0', ext: Os.isFamily(Os.FAMILY_WINDOWS) ? 'zip' : 'tbz2'
 
-    external 'com.gamua:starling-framework:1.6.0'
+    external 'com.gamua:starling-framework:1.7.0'
+    external group: 'org.osflash', name: 'as3-signals', version: '0.8', ext: 'swc'
 
-    merged 'com.timconkling:react-as3:1.1'
     merged 'deng:fzip:a5430bd'
 }
 

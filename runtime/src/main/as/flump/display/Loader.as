@@ -58,7 +58,7 @@ internal class Loader {
     }
 
     protected function onProgress (e :ProgressEvent) :void {
-        _libLoader.urlLoadProgressed.emit(e);
+        _libLoader.urlLoadProgressed.dispatch(e);
     }
 
     protected function onFileLoaded (e :FZipEvent) :void {
@@ -67,16 +67,16 @@ internal class Loader {
         if (name == LibraryLoader.LIBRARY_LOCATION) {
             const jsonString :String = loaded.content.readUTFBytes(loaded.content.length);
             _lib = LibraryMold.fromJSON(JSON.parse(jsonString));
-            _libLoader.libraryMoldLoaded.emit(_lib);
+            _libLoader.libraryMoldLoaded.dispatch(_lib);
         } else if (name == LibraryLoader.BYTEARRAY_LIBRARY_LOCATION) {
             LibraryLoader.registerByteArrayClassAliases();
             _lib = loaded.content.readObject() as LibraryMold;
-            _libLoader.libraryMoldLoaded.emit(_lib);
+            _libLoader.libraryMoldLoaded.dispatch(_lib);
         } else if (name.indexOf(PNG, name.length - PNG.length) != -1) {
             _atlasBytes[name] = loaded.content;
         } else if (name.indexOf(ATF, name.length - ATF.length) != -1) {
             _atlasBytes[name] = loaded.content;
-            _libLoader.atfAtlasLoaded.emit({name: name, bytes: loaded.content});
+            _libLoader.atfAtlasLoaded.dispatch({name: name, bytes: loaded.content});
         } else if (name == LibraryLoader.VERSION_LOCATION) {
             const zipVersion :String = loaded.content.readUTFBytes(loaded.content.length);
             if (zipVersion != LibraryLoader.VERSION) {
@@ -86,7 +86,7 @@ internal class Loader {
             _versionChecked = true;
         } else if (name == LibraryLoader.MD5_LOCATION ) { // Nothing to verify
         } else {
-            _libLoader.fileLoaded.emit({name: name, bytes: loaded.content});
+            _libLoader.fileLoaded.dispatch({name: name, bytes: loaded.content});
         }
     }
 
@@ -96,7 +96,10 @@ internal class Loader {
                                           LibraryLoader.BYTEARRAY_LIBRARY_LOCATION + " missing from zip");
         if (!_versionChecked) throw new Error(LibraryLoader.VERSION_LOCATION + " missing from zip");
         const loader :ImageLoader = _lib.textureFormat == "atf" ? null : new ImageLoader();
-        _pngLoaders.terminated.connect(_future.monitoredCallback(onPngLoadingComplete));
+        _pngLoaders.terminated.add( function (ex : Executor) :void {
+            if (_future.isComplete) return;
+            onPngLoadingComplete();
+        });
 
         // Determine the scale factor we want to use
         var textureGroup :TextureGroupMold = _lib.bestTextureGroupForScaleFactor(_scaleFactor);
@@ -131,9 +134,9 @@ internal class Loader {
             }
         } else {
             const atlasFuture :Future = loader.loadFromBytes(bytes, _pngLoaders);
-            atlasFuture.failed.connect(onPngLoadingFailed);
-            atlasFuture.succeeded.connect(function (img :LoadedImage) :void {
-                _libLoader.pngAtlasLoaded.emit({atlas: atlas, image: img});
+            atlasFuture.failed.add(onPngLoadingFailed);
+            atlasFuture.succeeded.add(function (img :LoadedImage) :void {
+                _libLoader.pngAtlasLoaded.dispatch({atlas: atlas, image: img});
                 baseTextureLoaded(Texture.fromBitmapData(
                     img.bitmapData,
                     _libLoader.generateMipMaps,
@@ -178,7 +181,7 @@ internal class Loader {
         }
     }
 
-    protected function onPngLoadingComplete (..._) :void {
+    protected function onPngLoadingComplete () :void {
         for each (var movie :MovieMold in _lib.movies) {
             movie.fillLabels();
             _creators[movie.id] = _libLoader.creatorFactory.createMovieCreator(

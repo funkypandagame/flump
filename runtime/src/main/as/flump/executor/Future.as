@@ -2,10 +2,7 @@
 // Flump - Copyright 2013 Flump Authors
 
 package flump.executor {
-
-import react.Signal;
-import react.SignalView;
-import react.UnitSignal;
+import org.osflash.signals.Signal;
 
 /**
  * The result of a pending or completed asynchronous task.
@@ -18,22 +15,22 @@ public class Future
     }
 
     /** Dispatches the result if the future completes successfully. */
-    public function get succeeded () :SignalView {
+    public function get succeeded () :Signal {
         return _onSuccess || (_onSuccess = new Signal(Object));
     }
 
     /** Dispatches the result if the future fails. */
-    public function get failed () :SignalView {
+    public function get failed () :Signal {
         return _onFailure || (_onFailure = new Signal(Object));
     }
 
     /** Dispatches if the future is cancelled. */
-    public function get cancelled () :SignalView {
-        return _onCancel || (_onCancel = new UnitSignal());
+    public function get cancelled () :Signal {
+        return _onCancel || (_onCancel = new Signal());
     }
 
     /** Dispatches the Future when it succeeds, fails, or is cancelled. */
-    public function get completed () :SignalView {
+    public function get completed () :Signal {
         return _onCompletion || (_onCompletion = new Signal(Future));
     }
 
@@ -58,7 +55,7 @@ public class Future
         }
         if (result.length > 0) _result = result[0];
         _state = STATE_SUCCEEDED;
-        if (_onSuccess) _onSuccess.emit(_result);
+        if (_onSuccess) _onSuccess.dispatch(_result);
         dispatchCompletion();
     }
 
@@ -68,19 +65,19 @@ public class Future
         }
         _result = error;
         _state = STATE_FAILED;
-        if (_onFailure) _onFailure.emit(error);
+        if (_onFailure) _onFailure.dispatch(error);
         dispatchCompletion();
     }
 
     internal function onCancel () :void {
         _state = STATE_CANCELLED;
-        if (_onCancel) _onCancel.emit();
+        if (_onCancel) _onCancel.dispatch();
         _onCompleted = null;// Don't tell the Executor we completed as we're not running
         dispatchCompletion();
     }
 
     protected function dispatchCompletion () :void {
-        if (_onCompletion) _onCompletion.emit(this);
+        if (_onCompletion) _onCompletion.dispatch(this);
         if (_onCompleted != null) _onCompleted(this);
         _onCompleted = null;// Allow Executor to be GC'd if the Future is hanging around
     }
@@ -91,7 +88,7 @@ public class Future
     // All Future signals are created lazily
     protected var _onSuccess :Signal;
     protected var _onFailure :Signal;
-    protected var _onCancel :UnitSignal;
+    protected var _onCancel :Signal;
     protected var _onCompletion :Signal;
     protected var _onCompleted :Function;
 

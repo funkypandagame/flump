@@ -10,7 +10,7 @@ import flash.geom.Rectangle;
 import flump.mold.LayerMold;
 import flump.mold.MovieMold;
 
-import react.Signal;
+import org.osflash.signals.Signal;
 
 import starling.animation.IAnimatable;
 import starling.display.DisplayObject;
@@ -321,7 +321,7 @@ public class Movie extends Sprite
 
             if (_labels[frameIdx] != null) {
                 for each (var label :String in _labels[frameIdx]) {
-                    labelPassed.emit(label);
+                    labelPassed.dispatch(label);
                     if (_pendingFrame != NO_FRAME) break;
                 }
             }

@@ -19,7 +19,7 @@ import flump.mold.LibraryMold;
 import flump.mold.MovieMold;
 import flump.mold.TextureGroupMold;
 
-import react.Signal;
+import org.osflash.signals.Signal;
 
 /**
  * Loads zip files created by the flump exporter and parses them into Library instances.

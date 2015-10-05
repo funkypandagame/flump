@@ -1,1 +1,10 @@
 exporter/src/test/export
+/bin-debug/*
+**/.idea
+**/*.iml
+/build/*
+.FlexUnitSettings
+**/.DS_Store
+**/.gradle
+**/desktop.ini
+**/Thumbs.db

@@ -23,40 +23,12 @@ public class FutureTask extends Future
     /** Fail immediately */
     public function fail (error :Object) :void { super.onFailure(error); }
 
-    /**
-     * Calls a function. Succeed if the function exits normally; fail with any
-     * error thrown by the Function.
-     */
-    public function succeedAfter(f :Function, ...args) :void {
-        applyMonitored(f, args);
-        if (!isComplete) succeed();
-    }
-
-    /**
-     * Call a function. Fail with any error thrown by the function, otherwise
-     * no state change.
-     */
-    public function monitor (f :Function, ...args) :void { applyMonitored(f, args); }
-
     /** Returns a callback Function that behaves like #monitor */
-    public function monitoredCallback (callback :Function, activeCallback :Boolean=true) :Function {
+    public function monitoredCallback (callback :Function) :Function {
         return function (...args) :void {
-            if (activeCallback && isComplete) return;
-            applyMonitored(callback, args);
+            if (isComplete) return;
+            callback.apply(this, args);
         };
-    }
-
-    protected function applyMonitored(monitored :Function, args :Array) :void {
-        try {
-            monitored.apply(this, args);
-        } catch (e :Error) {
-            if (this.isComplete) {
-                // can't fail if we're already completed
-                throw e;
-            } else {
-                fail(e);
-            }
-        }
     }
 }
 }
