@@ -8,3 +8,4 @@ exporter/src/test/export
 **/.gradle
 **/desktop.ini
 **/Thumbs.db
+exporter/build/*

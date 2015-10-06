@@ -1,0 +1,84 @@
+buildscript {
+    repositories {
+        mavenLocal()
+        maven {
+            url repoManagerURL + 'repo'
+            credentials {
+                username = mavenUsername
+                password = mavenPassword
+            }
+        }
+    }
+
+    dependencies {
+        classpath group: 'org.gradlefx', name: 'gradlefx', version: '1.3.1'
+    }
+}
+
+apply plugin: 'gradlefx'
+apply plugin: 'ideafx'
+
+group = 'com.threerings.flump'
+version = '999'
+type = 'air'
+srcDirs	= ['src/main/as']
+mainClass = 'Flump.mxml'
+frameworkLinkage = 'merged'
+
+air {
+    keystore 'etc/flump-exporter.pfx'
+    storepass 'pass'
+    applicationDescriptor 'etc/airdesc.xml'
+    fileOptions = [
+            '-C','icons',
+            'icons'
+    ]
+}
+
+repositories {
+    mavenLocal()
+    maven {
+        url repoManagerURL + 'repo'
+        credentials {
+            username = mavenUsername
+            password = mavenPassword
+        }
+    }
+    ivy {
+        name 'Apache'
+        artifactPattern 'http://archive.apache.org/dist/flex/[revision]/binaries/[module]-[revision]-bin.[ext]'
+    }
+}
+
+dependencies {
+    flexSDK group: 'org.apache', name: 'apache-flex-sdk', version: '4.13.0', ext: 'tar.gz'
+
+    merged 'com.adobe:as3corelib:0.9.3'
+    merged 'com.timconkling:aspire:1.1'
+
+    merged 'com.threerings.flump:flump-runtime:1.4-FP-2015-05-11'
+}
+
+additionalCompilerOptions = [
+    '+swfVersion=26',
+    // AS3 metadata
+    '-keep-as3-metadata+=Inline,Embed,SWF,Transient',
+    // Flex metadata
+    '-keep-as3-metadata+=Alternative,ArrayElementType,Bindable,DefaultProperty,Deprecated,Effect,Event,' +
+                        'HostComponent,IconFile,Inspectable,InstanceType,NonCommittingChangeEvent,RemoteClass,' +
+                        'RichTextContent,SkinPart,SkinState,Style',
+    '-advanced-telemetry'
+]
+
+sdkAutoInstall {
+    showPrompts = false
+}
+
+///////////////////////////////////////// wrapper
+task wrapper(type: Wrapper) {
+    group = 'Buildmaster'
+    description = 'Generates gradlew and gradlew.bat bootstrap scripts.'
+    gradleVersion = '2.6'
+    // place jar file and properties into a subdirectory to avoid root dir clutter
+    jarFile = 'gradle/wrapper/gradle.jar'
+}
