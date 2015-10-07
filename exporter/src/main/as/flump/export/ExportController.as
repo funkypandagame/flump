@@ -59,7 +59,7 @@ public class ExportController {
 
     protected function findFlashDocuments (base :File, exec :Executor,
             ignoreXflAtBase :Boolean = false) :void {
-        Files.list(base, exec).succeeded.connect(function (files :Array) :void {
+        Files.list(base, exec).succeeded.add(function (files :Array) :void {
             if (exec.isShutdown) return;
             for each (var file :File in files) {
                 if (Files.hasExtension(file, "xfl")) {
@@ -100,8 +100,8 @@ public class ExportController {
 
         const status :DocStatus = new DocStatus(name, Ternary.UNKNOWN, Ternary.UNKNOWN, null);
         addDoc(status);
-        load.succeeded.connect(F.argify(F.bind(docLoadSucceeded, status, F._1), 1));
-        load.failed.connect(F.argify(F.bind(docLoadFailed, file, status, F._1), 1));
+        load.succeeded.add(F.argify(F.bind(docLoadSucceeded, status, F._1), 1));
+        load.failed.add(F.argify(F.bind(docLoadFailed, file, status, F._1), 1));
     }
 
     protected function docLoadSucceeded (doc :DocStatus, lib :XflLibrary) :void {

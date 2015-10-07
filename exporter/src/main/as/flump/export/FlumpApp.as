@@ -52,7 +52,7 @@ public class FlumpApp
         NA.addEventListener(InvokeEvent.INVOKE, function (event :InvokeEvent) :void {
             if (event.arguments.length > 1 && event.arguments[0] == "--export") {
                 var headless :AutomaticExporter = new AutomaticExporter(new File(event.arguments[1]));
-                headless.complete.connectNotify(function (complete :Boolean) :void {
+                headless.complete.add(function (complete :Boolean) :void {
                     if (!complete) return;
 
                     // Even on Mac, running from the command line spawns a new instance of the app,

@@ -82,13 +82,13 @@ public class DisplayCreator
         return new Movie(_lib.getMovieMold(name), _lib.frameRate, this);
     }
 
-    public function getMemoryUsage (id :String, subtex :Dictionary = null) :int {
+    public function getMemoryUsage (id :String, subtex :Dictionary = null) :int { // TODO this is super slow
         if (id == null) return 0;
-
+        
         const tex :Texture = getStarlingTexture(id);
         if (tex != null) {
             const usage :int = 4 * tex.width * tex.height;
-            if (subtex != null && !subtex.hasOwnProperty(id)) subtex[id] = usage;
+            if (subtex != null && !subtex[id] !== undefined) subtex[id] = usage;
             return usage;
         }
 
@@ -101,6 +101,8 @@ public class DisplayCreator
         for (var texName :String in subtex) subtexUsage += subtex[texName];
         return subtexUsage;
     }
+
+
 
     public function dispose () :void {
         if (_baseTextures != null) {

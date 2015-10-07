@@ -10,13 +10,13 @@ import flump.export.view.EditFormatsWindow;
 import mx.collections.ArrayList;
 import mx.events.CollectionEvent;
 
-import react.UnitSignal;
+import org.osflash.signals.Signal;
 
 import spark.events.GridSelectionEvent;
 
 public class EditFormatsController
 {
-    public const formatsChanged :UnitSignal = new UnitSignal();
+    public const formatsChanged :Signal = new Signal(); //onceSignal
 
     public function EditFormatsController (conf :ProjectConf) {
         _win = new EditFormatsWindow();
@@ -24,7 +24,7 @@ public class EditFormatsController
 
         var dataProvider :ArrayList = new ArrayList(conf.exports);
         dataProvider.addEventListener(CollectionEvent.COLLECTION_CHANGE, function (..._) :void {
-            formatsChanged.emit();
+            formatsChanged.dispatch();
         });
 
         _win.exports.dataProvider = dataProvider;

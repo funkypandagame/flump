@@ -13,8 +13,7 @@ import flump.executor.Executor;
 import flump.xfl.ParseError;
 import flump.xfl.XflLibrary;
 
-import react.BoolValue;
-import react.BoolView;
+import org.osflash.signals.Signal;
 
 /**
  * This class expects to be run from the command-line script found at rsrc/flump-export. It sends
@@ -25,7 +24,7 @@ import react.BoolView;
 public class AutomaticExporter extends ExportController
 {
     public function AutomaticExporter (project :File) {
-        _complete.connect(function (complete :Boolean) :void {
+        _complete.add(function (complete :Boolean) :void {
             if (!complete) return;
             if (OUT != null) {
                 OUT.close();
@@ -46,7 +45,7 @@ public class AutomaticExporter extends ExportController
 
         if (readProjectConfig()) {
             var exec :Executor = new Executor();
-            exec.completed.connect(function () :void {
+            exec.completed.add(function () :void {
                 // if finding docs generates a crit error, we need to fail immediately
                 if (_handedCritError) exit();
             });
@@ -55,7 +54,7 @@ public class AutomaticExporter extends ExportController
         else exit();
     }
 
-    public function get complete () :BoolView { return _complete; }
+    public function get complete () :Signal { return _complete; }
 
     protected function checkValid () :void {
         if (getLibs() == null) return; // not done loading yet
@@ -181,10 +180,10 @@ public class AutomaticExporter extends ExportController
 
     protected function exit (err :* = null) :void {
         if (err != null) printErr(err);
-        _complete.value = true;
+        _complete.dispatch(true);
     }
 
-    protected const _complete :BoolValue = new BoolValue(false);
+    protected const _complete :Signal = new Signal(Boolean);
 
     protected var OUT :FileStream;
 

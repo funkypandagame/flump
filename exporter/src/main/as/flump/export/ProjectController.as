@@ -17,7 +17,6 @@ import flash.filesystem.File;
 import flash.utils.IDataOutput;
 
 import flump.executor.Executor;
-import flump.executor.Future;
 import flump.export.view.ProjectWindow;
 import flump.export.view.UnsavedChangesWindow;
 import flump.xfl.ParseError;
@@ -91,20 +90,20 @@ public class ProjectController extends ExportController
 
         // Import/Export directories
         _importChooser = new DirChooser(null, _win.importRoot, _win.browseImport);
-        _importChooser.changed.connect(setImportDirectory);
+        _importChooser.changed.add(setImportDirectory);
         _exportChooser = new DirChooser(null, _win.exportRoot, _win.browseExport);
-        _exportChooser.changed.connect(F.bind(reloadNow));
+        _exportChooser.changed.add(F.bind(reloadNow));
 
-        _importChooser.changed.connect(F.bind(setProjectDirty, true));
-        _exportChooser.changed.connect(F.bind(setProjectDirty, true));
+        _importChooser.changed.add(F.bind(setProjectDirty, true));
+        _exportChooser.changed.add(F.bind(setProjectDirty, true));
 
         // Edit Formats
         var editFormatsController :EditFormatsController = null;
         _win.editFormats.addEventListener(MouseEvent.CLICK, function (..._) :void {
             if (editFormatsController == null || editFormatsController.closed) {
                 editFormatsController = new EditFormatsController(_conf);
-                editFormatsController.formatsChanged.connect(updateUiFromConf);
-                editFormatsController.formatsChanged.connect(F.bind(setProjectDirty, true));
+                editFormatsController.formatsChanged.add(updateUiFromConf);
+                editFormatsController.formatsChanged.add(F.bind(setProjectDirty, true));
             } else {
                 editFormatsController.show();
             }

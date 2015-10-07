@@ -270,8 +270,7 @@ public class Movie extends Sprite
      */
     protected function updateFrame (newFrame :int, dt :Number) :void {
         if (newFrame < 0 || newFrame >= _numFrames) {
-            throw new Error("Invalid frame [frame=" + newFrame,
-                " validRange=0-" + (_numFrames - 1) + "]");
+            throw new Error("Invalid frame [frame=" + newFrame + " validRange=0-" + (_numFrames - 1) + "]");
         }
 
         if (_isUpdatingFrame) {

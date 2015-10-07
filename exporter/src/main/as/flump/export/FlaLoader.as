@@ -37,23 +37,23 @@ public class FlaLoader
 
         const swfFile :File = new File(Files.replaceExtension(file, "swf"));
         const loadSwfFile :Future = Files.load(swfFile, null);
-        loadSwfFile.succeeded.connect(onSwfFileLoaded);
-        loadSwfFile.failed.connect(onError);
+        loadSwfFile.succeeded.add(onSwfFileLoaded);
+        loadSwfFile.failed.add(onError);
         return future;
     }
 
     private function onSwfFileLoaded(data :ByteArray) : void {
         md5 = MD5.hashBytes(data);
         const loadSwf :Future = new SwfLoader().loadFromBytes(data);
-        loadSwf.succeeded.connect(onSwfBytesLoaded);
-        loadSwf.failed.connect(onError);
+        loadSwf.succeeded.add(onSwfBytesLoaded);
+        loadSwf.failed.add(onError);
     }
 
     private function onSwfBytesLoaded(loadedSwf :LoadedSwf) :void {
         swf = loadedSwf;
         const loadZip :Future = Files.load(file, _loader);
-        loadZip.succeeded.connect(onFlaLoaded);
-        loadZip.failed.connect(onError);
+        loadZip.succeeded.add(onFlaLoaded);
+        loadZip.failed.add(onError);
     }
 
     private function onFlaLoaded(data :ByteArray) :void {

@@ -171,7 +171,7 @@ public class XflLibrary
 
         // Find out max scale for each texture
         for each (movie in movies) {
-            getMaxScales(movie, 1);
+            setMaxScales(movie, 1);
         }
         // Scale the textures up to their maximum used scale, adjust scales of the symbols where they are used
         for each (var texture:XflTexture in textures) {
@@ -204,7 +204,7 @@ public class XflLibrary
         }
     }
 
-    private function getMaxScales(movie : MovieMold, currentScale : Number) : void {
+    private function setMaxScales(movie : MovieMold, currentScale : Number) : void {
         for each (var layer:LayerMold in movie.layers) {
             for each (var kf:KeyframeMold in layer.keyframes) {
                 var currentMaxScale : Number = Math.max(Math.abs(kf.scaleX * currentScale), Math.abs(kf.scaleY * currentScale));
@@ -214,7 +214,7 @@ public class XflLibrary
                     tex.scale = Math.max(currentMaxScale, tex.scale);
                     tex.keyframes[kf] = true;
                 } else if (item is MovieMold)  {
-                    getMaxScales(item as MovieMold, currentMaxScale);
+                    setMaxScales(item as MovieMold, currentMaxScale);
                 }
             }
         }
