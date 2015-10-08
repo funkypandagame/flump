@@ -54,7 +54,6 @@
                 <s:columns>
                     <s:ArrayList>
                         <s:GridColumn dataField="movie" headerText="Movie"/>
-                        <s:GridColumn id="movieMemory" dataField="memory" headerText="Memory"/>
                         <s:GridColumn id="maxDrawn" dataField="drawn" headerText="Max Drawn"/>
                     </s:ArrayList>
                 </s:columns>
@@ -67,13 +66,11 @@
                 <s:columns>
                     <s:ArrayList>
                         <s:GridColumn dataField="texture" headerText="Texture"/>
-                        <s:GridColumn id="textureMemory" dataField="memory" headerText="Memory"/>
                     </s:ArrayList>
                 </s:columns>
                 <mx:ArrayCollection/>
             </s:DataGrid>
             <s:HGroup width="100%">
-                <s:Label fontWeight="bold">Total memory:</s:Label><s:Label id="totalValue"/>
                 <s:HGroup width="100%" horizontalAlign="right">
                     <s:Button id="showAtlas" label="Show Atlas"/>
                 </s:HGroup>

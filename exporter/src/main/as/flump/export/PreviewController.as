@@ -170,16 +170,6 @@ public class PreviewController
 
         _creator = new DisplayCreator(_lib);
 
-        const intFormatter :NumberFormatter = new NumberFormatter();
-        const formatMemory :Function = function (item :Object, ..._) :String {
-            return intFormatter.format(item.memory/1024) + "k";
-        };
-        intFormatter.fractionalDigits = 0;
-
-        // Use a labelFunction so column sorting works as expected
-        _animPreviewWindow.movieMemory.labelFunction = formatMemory;
-        _animPreviewWindow.textureMemory.labelFunction = formatMemory;
-
         // All explicitly exported movies
         const previewMovies :Vector.<MovieMold> =
             _lib.movies.filter(function (movie :MovieMold, ..._) :Boolean {
@@ -190,20 +180,14 @@ public class PreviewController
         for each (var movie :MovieMold in previewMovies) {
             _animPreviewWindow.movies.dataProvider.addItem({
                 movie: movie.id,
-                memory: _creator.getMemoryUsage(movie.id),
                 drawn: _creator.getMaxDrawn(movie.id)
             });
         }
 
-        var totalUsage :int = 0;
         _animPreviewWindow.textures.dataProvider.removeAll();
         for each (var tex :XflTexture in _lib.textures) {
-            var itemUsage :int = _creator.getMemoryUsage(tex.symbol);
-            totalUsage += itemUsage;
-            _animPreviewWindow.textures.dataProvider.addItem({texture: tex.symbol, memory: itemUsage});
+            _animPreviewWindow.textures.dataProvider.addItem({texture: tex.symbol});
         }
-        _animPreviewWindow.totalValue.text = formatMemory({memory: totalUsage});
-
 
         if (previewMovies.length > 0) {
             // Play the first movie

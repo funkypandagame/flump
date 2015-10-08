@@ -3,8 +3,6 @@
 
 package flump.xfl {
 
-import aspire.util.Set;
-import aspire.util.Sets;
 import aspire.util.XmlUtil;
 
 import flump.mold.KeyframeMold;
@@ -38,11 +36,8 @@ public class XflMovie extends XflSymbol
         return names;
     }
 
-    public static function parse (lib :XflLibrary, xml :XML) :MovieMold {
-        const movie :MovieMold = new MovieMold();
-        const name :String = getName(xml);
-        const exportName :String = XmlUtil.getStringAttr(xml, EXPORT_CLASS_NAME, null);
-        movie.id = lib.createId(movie, name, exportName);
+    public static function parse (lib :XflLibrary, xml :XML, movie: MovieMold,
+                                  exportName : String) :MovieMold {
         const location :String = lib.location + ":" + movie.id;
 
         const layerEls :XMLList = xml.timeline.DOMTimeline[0].layers.DOMLayer;

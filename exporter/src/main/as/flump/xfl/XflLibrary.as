@@ -48,7 +48,7 @@ public class XflLibrary
     /** Exported movies or movies used in exported movies. */
     protected const _toPublish :Set = Sets.newSetOf(MovieMold);
     /** Symbol or generated symbol to texture or movie. */
-    protected const _idToItem :Dictionary = new Dictionary();
+    private const _idToItem :Dictionary = new Dictionary();
     protected const _errors :Vector.<ParseError> = new <ParseError>[];
     private static const log :Log = Log.getLog(XflLibrary);
 
@@ -72,14 +72,6 @@ public class XflLibrary
         const result :Vector.<MovieMold> = new <MovieMold>[];
         for each (var movie :MovieMold in _toPublish.toArray().sortOn("id")) result.push(movie);
         return result;
-    }
-
-    public function createId (item :Object, libraryName :String, symbol :String) :String {
-        if (symbol != null) _moldToSymbol.put(item, symbol);
-        const id :String = symbol == null ? IMPLICIT_PREFIX + libraryName : symbol;
-        _libraryNameToId.put(libraryName, id);
-        _idToItem[id] = item;
-        return id;
     }
 
     public function getErrors (sev :String=null) :Vector.<ParseError> {
@@ -143,7 +135,7 @@ public class XflLibrary
                     // It's a movie. If it's exported, we parse it now. Else, we save it for possible parsing later.
                     // (Un-exported movies that are not referenced will not be published.)
                     if (XflMovie.isExported(xml)) {
-                        movies.push(XflMovie.parse(this, xml));
+                        addMovie(xml);
                     }
                     else {
                         unexportedMovies.put(XflMovie.getName(xml), xml);
@@ -159,7 +151,9 @@ public class XflLibrary
             var movie :MovieMold = movies[ii];
             for each (var symbolName :String in XflMovie.getSymbolNames(movie)) {
                 var movXml :XML = unexportedMovies.remove(symbolName);
-                if (movXml != null) movies.push(XflMovie.parse(this, movXml));
+                if (movXml != null) {
+                    addMovie(movXml);
+                }
             }
         }
 
@@ -205,8 +199,12 @@ public class XflLibrary
     }
 
     private function setMaxScales(movie : MovieMold, currentScale : Number) : void {
-        for each (var layer:LayerMold in movie.layers) {
-            for each (var kf:KeyframeMold in layer.keyframes) {
+        var numLayers : uint = movie.layers.length;
+        for (var i : int = 0; i < numLayers; i++) {
+            var layer : LayerMold = movie.layers[i];
+            var numKeyframes : uint = layer.keyframes.length;
+            for (var j : int = 0; j < numKeyframes; j++) {
+                var kf : KeyframeMold = layer.keyframes[j];
                 var currentMaxScale : Number = Math.max(Math.abs(kf.scaleX * currentScale), Math.abs(kf.scaleY * currentScale));
                 var item : Object = _idToItem[kf.ref];
                 if (item is XflTexture) {
@@ -260,7 +258,7 @@ public class XflLibrary
         }
     }
 
-    protected function setKeyframeIDs(movie :MovieMold) :void {
+    private function setKeyframeIDs(movie :MovieMold) :void {
         if (!_toPublish.add(movie)) return;
         for each (var layer :LayerMold in movie.layers) {
             for each (var kf :KeyframeMold in layer.keyframes) {
@@ -279,10 +277,27 @@ public class XflLibrary
     }
 
     private function addTexture(xml : XML) : void {
-        var symbol : String = XmlUtil.getStringAttr(xml, "linkageClassName");
-        var tex : XflTexture = new XflTexture(symbol);
-        createId(tex, XmlUtil.getStringAttr(xml, "name"), symbol);
+        var exportName : String = XmlUtil.getStringAttr(xml, XflSymbol.EXPORT_CLASS_NAME);
+        var tex : XflTexture = new XflTexture(exportName);
+        createId(tex, XmlUtil.getStringAttr(xml, XflSymbol.NAME), exportName);
         textures.push(tex);
+    }
+
+    private function addMovie(xml : XML) : void
+    {
+        const movie: MovieMold = new MovieMold();
+        const exportName :String = XmlUtil.getStringAttr(xml, XflSymbol.EXPORT_CLASS_NAME, null);
+        movie.id = createId(movie, XflMovie.getName(xml), exportName);
+        XflMovie.parse(this, xml, movie, exportName);
+        movies.push(movie);
+    }
+
+    private function createId (item :Object, libraryName :String, exportName :String) :String {
+        if (exportName != null) _moldToSymbol.put(item, exportName);
+        const id :String = exportName == null ? IMPLICIT_PREFIX + libraryName : exportName;
+        _libraryNameToId.put(libraryName, id);
+        _idToItem[id] = item;
+        return id;
     }
 
 }
