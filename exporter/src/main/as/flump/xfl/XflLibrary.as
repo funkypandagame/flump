@@ -47,7 +47,7 @@ public class XflLibrary
     protected const _libraryNameToId :Map = Maps.newMapOf(String);
     /** Exported movies or movies used in exported movies. */
     protected const _toPublish :Set = Sets.newSetOf(MovieMold);
-    /** Symbol or generated symbol to texture or movie. */
+    /** Symbol or generated symbol to XflTexture or MovieMold. */
     private const _idToItem :Dictionary = new Dictionary();
     protected const _errors :Vector.<ParseError> = new <ParseError>[];
     private static const log :Log = Log.getLog(XflLibrary);
@@ -198,21 +198,23 @@ public class XflLibrary
         }
     }
 
-    private function setMaxScales(movie : MovieMold, currentScale : Number) : void {
+    private static function setMaxScales(movie : MovieMold, currentScale : Number) : void {
         var numLayers : uint = movie.layers.length;
         for (var i : int = 0; i < numLayers; i++) {
             var layer : LayerMold = movie.layers[i];
             var numKeyframes : uint = layer.keyframes.length;
             for (var j : int = 0; j < numKeyframes; j++) {
                 var kf : KeyframeMold = layer.keyframes[j];
-                var currentMaxScale : Number = Math.max(Math.abs(kf.scaleX * currentScale), Math.abs(kf.scaleY * currentScale));
-                var item : Object = _idToItem[kf.ref];
-                if (item is XflTexture) {
-                    var tex : XflTexture = item as XflTexture;
+                var currentXScale : Number = kf.scaleX * currentScale;
+                var currentYScale : Number = kf.scaleY * currentScale;
+                var currentMaxScale : Number = Math.max(currentXScale < 0 ? -currentXScale : currentXScale, // fast Math.abs
+                                                        currentYScale < 0 ? -currentYScale : currentYScale);
+                if (kf.refXflTexture) {
+                    var tex : XflTexture = XflTexture(kf.refXflTexture);
                     tex.scale = Math.max(currentMaxScale, tex.scale);
                     tex.keyframes[kf] = true;
-                } else if (item is MovieMold)  {
-                    setMaxScales(item as MovieMold, currentMaxScale);
+                } else if (kf.refMovieMold){
+                    setMaxScales(kf.refMovieMold, currentMaxScale);
                 }
             }
         }
@@ -223,28 +225,21 @@ public class XflLibrary
         for each (var layer :LayerMold in movie.layers) {
             for each (var kf :KeyframeMold in layer.keyframes) {
                 var swfTexture :SwfTexture = null;
-                if (movie.flipbook) {
+
+                if (kf.ref == null) continue;
+                var item :Object = _idToItem[kf.ref];
+                if (item is MovieMold) {
+                    setKeyframePivots(MovieMold(item));
+                } else if (item is XflTexture) {
+                    const tex :XflTexture = XflTexture(item);
                     try {
-                        swfTexture = SwfTexture.fromFlipbook(this, movie, kf.index)
+                        swfTexture = SwfTexture.fromTexture(this, tex);
                     } catch (e :Error) {
-                        addTopLevelError(ParseError.CRIT, "Error creating flipbook texture from '" + movie.id + "'");
+                        addTopLevelError(ParseError.CRIT, "Error creating texture '" + tex.symbol + "'");
                         swfTexture = null;
                     }
-                } else {
-                    if (kf.ref == null) continue;
-                    var item :Object = _idToItem[kf.ref];
-                    if (item is MovieMold) {
-                        setKeyframePivots(MovieMold(item));
-                    } else if (item is XflTexture) {
-                        const tex :XflTexture = XflTexture(item);
-                        try {
-                            swfTexture = SwfTexture.fromTexture(this, tex);
-                        } catch (e :Error) {
-                            addTopLevelError(ParseError.CRIT, "Error creating texture '" + tex.symbol + "'");
-                            swfTexture = null;
-                        }
-                    }
                 }
+
                 if (swfTexture != null) {
                     if (swfTexture.w == 0 || swfTexture.h == 0) {
                         addError(location + ":" + kf.ref, ParseError.CRIT, "Symbol width or height is 0");
@@ -262,15 +257,17 @@ public class XflLibrary
         if (!_toPublish.add(movie)) return;
         for each (var layer :LayerMold in movie.layers) {
             for each (var kf :KeyframeMold in layer.keyframes) {
-                if (!movie.flipbook) {
-                    if (kf.ref == null) continue;
-                    kf.ref = _libraryNameToId.get(kf.ref);
-                    var item :Object = _idToItem[kf.ref];
-                    if (item == null) {
-                        addTopLevelError(ParseError.CRIT, "unrecognized library item '" + kf.ref + "'");
-                    } else if (item is MovieMold) {
-                        setKeyframeIDs(MovieMold(item));
-                    }
+                if (kf.ref == null) continue;
+                kf.ref = _libraryNameToId.get(kf.ref);
+                var item :Object = _idToItem[kf.ref];
+                if (item == null) {
+                    addTopLevelError(ParseError.CRIT, "unrecognized library item '" + kf.ref + "'");
+                } else if (item is MovieMold) {
+                    setKeyframeIDs(MovieMold(item));
+                    kf.refMovieMold = MovieMold(item);
+                }
+                else {
+                    kf.refXflTexture = XflTexture(item);
                 }
             }
         }

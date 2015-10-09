@@ -27,10 +27,8 @@ public class XflMovie extends XflSymbol
     public static function getSymbolNames(mold : MovieMold) : Vector.<String> {
         var names : Vector.<String> = new Vector.<String>();
         for each (var layer :LayerMold in mold.layers) {
-            if (!layer.flipbook) {
-                for each (var kf :KeyframeMold in layer.keyframes) {
-                    if (kf.ref != null) names.push(kf.ref);
-                }
+            for each (var kf :KeyframeMold in layer.keyframes) {
+                if (kf.ref != null) names.push(kf.ref);
             }
         }
         return names;
@@ -41,20 +39,10 @@ public class XflMovie extends XflSymbol
         const location :String = lib.location + ":" + movie.id;
 
         const layerEls :XMLList = xml.timeline.DOMTimeline[0].layers.DOMLayer;
-        if (XmlUtil.getStringAttr(layerEls[0], XflLayer.NAME) == "flipbook") {
-            movie.layers.push(XflLayer.parse(lib, location, layerEls[0], true));
-            if (exportName == null) {
-                lib.addError(location, ParseError.CRIT, "Flipbook movie '" + movie.id + "' not exported");
-            }
-            for each (var kf :KeyframeMold in movie.layers[0].keyframes) {
-                kf.ref = movie.id + "_flipbook_" + kf.index;
-            }
-        } else {
-            for each (var layerEl :XML in layerEls) {
-                var layerType :String = XmlUtil.getStringAttr(layerEl, XflLayer.TYPE, "");
-                if ((layerType != XflLayer.TYPE_GUIDE) && (layerType != XflLayer.TYPE_FOLDER)) {
-                    movie.layers.unshift(XflLayer.parse(lib, location, layerEl, false));
-                }
+        for each (var layerEl :XML in layerEls) {
+            var layerType :String = XmlUtil.getStringAttr(layerEl, XflLayer.TYPE, "");
+            if ((layerType != XflLayer.TYPE_GUIDE) && (layerType != XflLayer.TYPE_FOLDER)) {
+                movie.layers.unshift(XflLayer.parse(lib, location, layerEl));
             }
         }
         movie.fillLabels();

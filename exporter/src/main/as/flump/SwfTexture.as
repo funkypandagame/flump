@@ -29,19 +29,6 @@ public class SwfTexture
     public function get h() :int { return Math.ceil(_h * _scale); }
     public function get a() :int { return this.w * this.h; }
 
-    public static function fromFlipbook (lib :XflLibrary, movie :MovieMold, frame :int,
-            quality :String = StageQuality.BEST, scale :Number = 1,
-            useNamespace :Boolean = false) :SwfTexture {
-        const klass :Class = Class(lib.swf.getSymbol(movie.id));
-        const clip :MovieClip = MovieClip(new klass());
-        clip.gotoAndStop(frame + 1);
-        const ns :String = useNamespace ? lib.location + "/" : "";
-        const name :String = ns + movie.id + "_flipbook_" + frame;
-
-        //TODO scale = scale * lib.textureScales[]
-        return new SwfTexture(name, clip, scale, quality);
-    }
-
     public static function fromTexture (lib :XflLibrary, tex : XflTexture,
             quality :String = StageQuality.BEST, scale :Number = 1,
             useNamespace :Boolean = false) :SwfTexture {

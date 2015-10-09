@@ -19,7 +19,7 @@ import starling.display.Sprite;
  */
 internal class Layer implements IAnimatable
 {
-    public function Layer (movie :Movie, src :LayerMold, library :Library, flipbook :Boolean) {
+    public function Layer (movie :Movie, src :LayerMold, library :Library) {
         _keyframes = src.keyframes;
         _movie = movie;
         _name = src.name;
@@ -31,7 +31,7 @@ internal class Layer implements IAnimatable
         for (var ii :int = 0; ii < _keyframes.length && lastItem == null; ii++) {
             lastItem = _keyframes[ii].ref;
         }
-        if (!flipbook && lastItem == null) {
+        if (lastItem == null) {
             // The layer is empty.
             _currentDisplay = new Sprite();
             _movie.addChild(_currentDisplay);

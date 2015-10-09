@@ -18,14 +18,13 @@ public class XflLayer
 
     use namespace xflns;
 
-    public static function parse (lib :XflLibrary, baseLocation :String, xml :XML, flipbook :Boolean) :LayerMold {
+    public static function parse (lib :XflLibrary, baseLocation :String, xml :XML) :LayerMold {
         const layer :LayerMold = new LayerMold();
         layer.name = XmlUtil.getStringAttr(xml, NAME);
-        layer.flipbook = flipbook;
         const location :String = baseLocation + ":" + layer.name;
         var frameXmlList :XMLList = xml.frames.DOMFrame;
         for each (var frameXml :XML in frameXmlList) {
-            layer.keyframes.push(XflKeyframe.parse(lib, location, frameXml, flipbook));
+            layer.keyframes.push(XflKeyframe.parse(lib, location, frameXml));
         }
         if (layer.keyframes.length == 0) lib.addError(location, ParseError.INFO, "No keyframes on layer");
 

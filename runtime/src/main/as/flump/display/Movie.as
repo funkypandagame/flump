@@ -50,17 +50,13 @@ public class Movie extends Sprite
         this.name = src.id;
         _labels = src.labels;
         _frameRate = frameRate;
-        if (src.flipbook) {
-            _layers = new Vector.<Layer>(1, true);
-            _layers[0] = createLayer(this, src.layers[0], library, /*flipbook=*/true);
-            _numFrames = src.layers[0].frames;
-        } else {
-            _layers = new Vector.<Layer>(src.layers.length, true);
-            for (var ii :int = 0; ii < _layers.length; ii++) {
-                _layers[ii] = createLayer(this, src.layers[ii], library, /*flipbook=*/false);
-                _numFrames = Math.max(src.layers[ii].frames, _numFrames);
-            }
+
+        _layers = new Vector.<Layer>(src.layers.length, true);
+        for (var ii :int = 0; ii < _layers.length; ii++) {
+            _layers[ii] = createLayer(this, src.layers[ii], library);
+            _numFrames = Math.max(src.layers[ii].frames, _numFrames);
         }
+
         _duration = _numFrames / _frameRate;
         updateFrame(0, 0);
 
@@ -339,8 +335,8 @@ public class Movie extends Sprite
         }
     }
 
-    protected function createLayer (movie :Movie, src :LayerMold, library :Library, flipbook :Boolean) :Layer {
-        return new Layer(movie, src, library, flipbook);
+    protected function createLayer (movie :Movie, src :LayerMold, library :Library) :Layer {
+        return new Layer(movie, src, library);
     }
 
     /** @private */

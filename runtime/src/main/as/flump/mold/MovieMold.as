@@ -21,9 +21,6 @@ public class MovieMold
         return frames;
     }
 
-    [Transient]
-    public function get flipbook () :Boolean { return (layers.length > 0 && layers[0].flipbook); }
-
     public function fillLabels () :void {
         labels = new Vector.<Vector.<String>>(frames, true);
         if (labels.length == 0) {

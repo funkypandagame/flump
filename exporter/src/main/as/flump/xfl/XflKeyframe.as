@@ -31,8 +31,7 @@ public class XflKeyframe
 
     use namespace xflns;
 
-    public static function parse (lib :XflLibrary, baseLocation :String, xml :XML,
-        flipbook :Boolean) :KeyframeMold {
+    public static function parse (lib :XflLibrary, baseLocation :String, xml :XML) :KeyframeMold {
 
         const kf :KeyframeMold = new KeyframeMold();
         kf.index = XmlUtil.getIntAttr(xml, INDEX);
@@ -45,13 +44,6 @@ public class XflKeyframe
         kf.tweened = (tweenType != null);
         if (tweenType != null && tweenType != TWEEN_TYPE_MOTION) {
             lib.addError(location, ParseError.WARN, "Unrecognized tweenType '" + tweenType + "'");
-        }
-
-        if (flipbook) {
-            if (xml.elements.elements().length() == 0) {
-                lib.addError(location, ParseError.CRIT, "Empty frames are not allowed in flipbooks");
-            }
-            return kf;
         }
 
         var instanceXml :XML = null;
@@ -76,11 +68,10 @@ public class XflKeyframe
             lib.addError(location, ParseError.WARN, "Custom easing is not supported");
         }
 
-        // Fill this in with the library name for now. XflLibrary.finishLoading will swap in the
+        // Fill this in with the library name for now. XflLibrary.setKeyframeIDs will swap in the
         // symbol or implicit symbol the library item corresponds to.
         kf.ref = XmlUtil.getStringAttr(instanceXml, XflInstance.LIBRARY_ITEM_NAME);
         kf.visible = XmlUtil.getBooleanAttr(instanceXml, XflInstance.IS_VISIBLE, true);
-
 
         // Read the matrix transform
         var matrix :Matrix;
@@ -88,10 +79,13 @@ public class XflKeyframe
         if (matrixXml == null) {
             matrix = new Matrix();
         } else {
-            function m (name :String, def :Number) :Number {
-                return XmlUtil.getNumberAttr(matrixXml, name, def);
-            }
-            matrix = new Matrix(m("a", 1), m("b", 0), m("c", 0), m("d", 1), m("tx", 0), m("ty", 0));
+            matrix = new Matrix(
+                    XmlUtil.getNumberAttr(matrixXml,"a", 1),
+                    XmlUtil.getNumberAttr(matrixXml,"b", 0),
+                    XmlUtil.getNumberAttr(matrixXml,"c", 0),
+                    XmlUtil.getNumberAttr(matrixXml,"d", 1),
+                    XmlUtil.getNumberAttr(matrixXml,"tx", 0),
+                    XmlUtil.getNumberAttr(matrixXml,"ty", 0));
 
             kf.scaleX = MatrixUtil.scaleX(matrix);
             kf.scaleY = MatrixUtil.scaleY(matrix);

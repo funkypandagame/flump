@@ -12,7 +12,6 @@ public class KeyframeMold
 
     /**
      * The symbol of the image or movie in this keyframe, or null if there is nothing in it.
-     * For flipbook frames, this will be a name constructed out of the movie and frame index.
      */
     public var ref :String;
 
@@ -59,6 +58,12 @@ public class KeyframeMold
 
     [Transient]
     public function get rotation () :Number { return skewX; }
+
+    [Transient]
+    public var refMovieMold : MovieMold; // Movie reference. Exporter uses it to speed up calculation
+
+    [Transient]
+    public var refXflTexture : Object; // Texture reference. Exporter uses it to speed up calculation
 
     public function rotate (delta :Number) :void {
         skewX += delta;

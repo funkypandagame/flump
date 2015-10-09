@@ -2,7 +2,6 @@
 // Flump - Copyright 2013 Flump Authors
 
 package flump.export.texturepacker {
-import flash.utils.getTimer;
 
 import flump.export.*;
 
@@ -11,8 +10,6 @@ import aspire.util.Comparators;
 import flash.display.StageQuality;
 
 import flump.SwfTexture;
-import flump.mold.KeyframeMold;
-import flump.mold.MovieMold;
 
 import flump.xfl.XflLibrary;
 import flump.xfl.XflTexture;
@@ -50,13 +47,6 @@ public class TexturePacker
         for each (var lib :XflLibrary in _libs) {
             for each (var tex :XflTexture in lib.textures) {
                 _unpacked.push(SwfTexture.fromTexture(lib, tex, _quality, scale, useNamespaces));
-            }
-            for each (var movie :MovieMold in lib.movies) {
-                if (!movie.flipbook) continue;
-                for each (var kf :KeyframeMold in movie.layers[0].keyframes) {
-                    _unpacked.push(SwfTexture.fromFlipbook(lib, movie, kf.index, _quality, scale,
-                            useNamespaces));
-                }
             }
         }
 
