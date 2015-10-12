@@ -37,8 +37,8 @@ public class TexturePacker
     public function borderSize (val :int) :TexturePacker { _borderSize = val; return this; }
     public function maxAtlasSize (val :int) :TexturePacker { _maxAtlasSize = val; return this; }
     public function optimizeForSpeed (val :Boolean) :TexturePacker { _optimizeForSpeed = val; return this; }
-    public function quality (val :String) :TexturePacker { _quality = val; return this; }
     public function filenamePrefix (val :String) :TexturePacker { _filenamePrefix = val; return this; }
+    public function isPowerOf2 (val :Boolean) :TexturePacker { _isPowerOf2 = val; return this; }
 
     public function createAtlases () :Vector.<Atlas> {
         const _unpacked :Vector.<SwfTexture> = new <SwfTexture>[];
@@ -46,7 +46,7 @@ public class TexturePacker
         var useNamespaces :Boolean = _libs.length > 1;
         for each (var lib :XflLibrary in _libs) {
             for each (var tex :XflTexture in lib.textures) {
-                _unpacked.push(SwfTexture.fromTexture(lib, tex, _quality, scale, useNamespaces));
+                _unpacked.push(SwfTexture.fromTexture(lib, tex, StageQuality.BEST, scale, useNamespaces));
             }
         }
 
@@ -56,15 +56,16 @@ public class TexturePacker
             var w :int = unpacked.w + (_borderSize * 2);
             var h :int = unpacked.h + (_borderSize * 2);
             if (w > _maxAtlasSize || h > _maxAtlasSize) {
-                throw new Error("Too large to fit in an atlas: '" + unpacked.symbol + "' (" +
-                                 w + "x" + h + ")");
+                throw new Error("Too large to fit in an atlas: '" + unpacked.symbol + "' (" + w + "x" + h + ")");
             }
         }
         var atlases : Vector.<Atlas>;
         if (_optimizeForSpeed) {
-            atlases = new MaxRectMultiPacker().pack(_unpacked, _maxAtlasSize, _borderSize, _scaleFactor, _quality, _filenamePrefix);
+            atlases = new MaxRectMultiPacker().pack(_unpacked, _maxAtlasSize, _borderSize,
+                    _scaleFactor, StageQuality.BEST, _filenamePrefix, _isPowerOf2);
         } else {
-            atlases = new SpaceSavingMultiPacker().pack(_unpacked, _maxAtlasSize, _borderSize, _scaleFactor, _quality, _filenamePrefix);
+            atlases = new SpaceSavingMultiPacker().pack(_unpacked, _maxAtlasSize,
+                    _borderSize, _scaleFactor, StageQuality.BEST, _filenamePrefix, _isPowerOf2);
         }
         return atlases;
     }
@@ -76,6 +77,6 @@ public class TexturePacker
     protected var _maxAtlasSize :int = 2048;
     protected var _optimizeForSpeed :Boolean = true;
     protected var _filenamePrefix :String = "";
-    protected var _quality :String = StageQuality.BEST;
+    protected var _isPowerOf2 :Boolean = true;
 }
 }

@@ -56,20 +56,14 @@
             </fx:Component>
           </s:itemEditor>
         </s:GridColumn>
-        <s:GridColumn dataField="quality" headerText="Quality">
+        <s:GridColumn dataField="isPowerOf2Texture" headerText="Power of 2 texture">
           <s:itemEditor>
             <fx:Component>
               <s:ComboBoxGridItemEditor>
                 <s:dataProvider>
                   <s:ArrayList>
-                    <fx:String>low</fx:String>
-                    <fx:String>medium</fx:String>
-                    <fx:String>high</fx:String>
-                    <fx:String>best</fx:String>
-                    <fx:String>8x8</fx:String>
-                    <fx:String>8x8linear</fx:String>
-                    <fx:String>16x16</fx:String>
-                    <fx:String>16x16linear</fx:String>
+                    <fx:String>true</fx:String>
+                    <fx:String>false</fx:String>
                   </s:ArrayList>
                 </s:dataProvider>
               </s:ComboBoxGridItemEditor>

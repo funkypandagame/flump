@@ -44,6 +44,7 @@ public class MovieMold
     }
 
     public function scale(scale :Number) : void {
+        if (scale == 1) return;
         for each (var layer :LayerMold in layers) {
             for each (var kf :KeyframeMold in layer.keyframes) {
                 kf.x *= scale;

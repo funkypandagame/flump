@@ -30,7 +30,7 @@ public class RuntimePlaybackTest
 
     protected function setup (finisher :FutureTask) :void {
         _finisher = finisher;
-        _movie = _res.createMovie("nesteddance");
+        _movie = _res.createDisplayObject("nesteddance") as Movie;
         assert(_movie.frame == 0, "Frame starts at 0");
         assert(_movie.isPlaying, "Movie starts out playing");
         _runner.addChild(_movie);
@@ -40,7 +40,7 @@ public class RuntimePlaybackTest
     }
 
     public function goToFrameAndLabel () :void {
-        _movie = _res.createMovie("nesteddance");
+        _movie = _res.createDisplayObject("nesteddance") as Movie;
         _movie.labelPassed.connect(function (labelName :String) :void {
             _labelsPassed.push(labelName);
         });

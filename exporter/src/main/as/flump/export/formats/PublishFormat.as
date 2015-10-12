@@ -61,7 +61,7 @@ public class PublishFormat
             .borderSize(_conf.textureBorder)
             .maxAtlasSize(_conf.maxAtlasSize)
             .optimizeForSpeed(_conf.optimize == ExportConf.OPTIMIZE_SPEED)
-            .quality(_conf.quality)
+            .isPowerOf2(_conf.isPowerOf2Texture)
             .filenamePrefix(prefix);
 
         var atlases :Vector.<Atlas> = new <Atlas>[];

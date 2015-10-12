@@ -5,7 +5,7 @@
         showStatusBar="false"
         title="Preview"
         skinClass="flump.export.view.AnimPreviewWindowSkin"
-        width="680" height="660">
+        width="1300" height="660">
 
     <fx:Script>
         <![CDATA[
@@ -27,7 +27,7 @@
           nativeWindow.stage.addEventListener(Event.RESIZE, function (..._) :void {
             var w :int = previewGroup.width;
             var h :int = previewGroup.height;
-            _starling.viewPort = new Rectangle(0, 0, w, h);
+            _starling.viewPort = new flash.geom.Rectangle(0, 0, w, h);
             _starling.stage.stageWidth = w;
             _starling.stage.stageHeight = h;
           });
@@ -42,14 +42,38 @@
         ]]>
     </fx:Script>
 
+    <s:layout>
+        <s:VerticalLayout />
+    </s:layout>
+
+    <s:HGroup width="100%" paddingLeft="50">
+        <s:Label text="Scale:" verticalAlign="middle" width="40" height="100%" />
+        <s:TextInput id="scale" widthInChars="3" restrict=".0123456789" text="1"/>
+        <s:Label text="Border:" verticalAlign="middle" width="50" height="100%" />
+        <s:TextInput id="border" widthInChars="3" restrict="0123456789" text="1"/>
+        <s:Label text="Optimization method:" verticalAlign="middle" height="100%" />
+        <s:DropDownList id="optimizeBox" requireSelection="true">
+            <s:dataProvider>
+                <s:ArrayList>
+                    <fx:String>{ExportConf.OPTIMIZE_MEMORY}</fx:String>
+                    <fx:String>{ExportConf.OPTIMIZE_SPEED}</fx:String>
+                </s:ArrayList>
+            </s:dataProvider>
+        </s:DropDownList>
+        <s:CheckBox id="usePowerOf2CheckBox" label="Use power of 2 textures" />
+        <s:Button id="preview" label="Preview"/>
+        <s:Label fontWeight="bold" verticalAlign="middle" height="100%">Atlas Waste:</s:Label>
+        <s:Label id="atlasWasteValue" verticalAlign="middle" height="100%"/>
+    </s:HGroup>
+
     <s:HGroup width="100%" height="100%" >
 
-        <s:Group width="100%" height="100%" id="previewGroup" />
+        <s:Group width="500" height="100%" id="previewGroup" />
 
-        <s:VGroup width="300" height="100%">
+        <s:VGroup width="200" height="100%">
             <s:DataGrid id="movies" height="50%" width="100%">
                 <s:typicalItem>
-                    <s:DataItem movie="multiple/segment/movie" memory="12345678" drawn="1234532"/>
+                    <s:DataItem movie="longMovieName" drawn="1234532"/>
                 </s:typicalItem>
                 <s:columns>
                     <s:ArrayList>
@@ -61,7 +85,7 @@
             </s:DataGrid>
             <s:DataGrid id="textures" height="50%" width="100%">
                 <s:typicalItem>
-                    <s:DataItem texture="multiple/segment/movie" memory="123456"/>
+                    <s:DataItem texture="longTextureName" />
                 </s:typicalItem>
                 <s:columns>
                     <s:ArrayList>
@@ -70,12 +94,18 @@
                 </s:columns>
                 <mx:ArrayCollection/>
             </s:DataGrid>
-            <s:HGroup width="100%">
-                <s:HGroup width="100%" horizontalAlign="right">
-                    <s:Button id="showAtlas" label="Show Atlas"/>
-                </s:HGroup>
-            </s:HGroup>
         </s:VGroup>
+
+        <s:Scroller id="scroller" width="100%" height="100%" horizontalScrollPolicy="auto" verticalScrollPolicy="auto">
+            <s:Group>
+                <s:Group id="bitmapLayoutGroup"/>
+            </s:Group>
+        </s:Scroller>
+
     </s:HGroup>
+
+    <fx:Script><![CDATA[
+        import flump.export.*;
+        ]]></fx:Script>
 
 </s:Window>

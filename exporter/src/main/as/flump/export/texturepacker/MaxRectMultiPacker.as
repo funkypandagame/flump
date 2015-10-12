@@ -14,13 +14,23 @@ import flump.export.AtlasImpl;
 // Packer that tries to use as few atlases as possible
 public class MaxRectMultiPacker extends MultiPackerBase {
 
+    private var atlases :Vector.<Atlas>;
+    private var _borderSize :uint;
+    private var _maxAtlasSize :uint;
+    private var _unpacked :Vector.<SwfTexture>;
+    private var _scaleFactor :int;
+    private var _quality :String;
+    private var _filenamePrefix :String;
+    private static const log :Log = Log.getLog(MaxRectMultiPacker);
+
     // TODO the last 3 parameters are not needed for this class
     override public function pack(textures :Vector.<SwfTexture>,
                          maxAtlasSize :uint,
                          borderSize :uint,
                          scaleFactor :int,
                          quality :String,
-                         filenamePrefix :String) : Vector.<Atlas> {
+                         filenamePrefix :String,
+                         isPowerOf2 : Boolean) : Vector.<Atlas> {
 
         _unpacked = textures;
         _borderSize = borderSize;
@@ -30,18 +40,19 @@ public class MaxRectMultiPacker extends MultiPackerBase {
         _filenamePrefix = filenamePrefix;
 
         atlases = new Vector.<Atlas>();
-        packIntoAtlas(calculateMinimumSize(_unpacked, _borderSize, _maxAtlasSize));
+        packIntoAtlas(calculateMinimumSize(_unpacked, _borderSize, _maxAtlasSize, isPowerOf2), isPowerOf2);
         return atlases;
     }
 
-    private function packIntoAtlas(atlasSize : Point) : void {
+    private function packIntoAtlas(atlasSize : Point, isPowerOf2 : Boolean) : void {
         //log.info("Starting to pack into a " + atlasSize.x + "x" + atlasSize.y + " atlas");
         var atlas : AtlasImpl = new AtlasImpl(
                 _filenamePrefix + "atlas" + atlases.length,
                 atlasSize.x, atlasSize.y,
                 _borderSize,
                 _scaleFactor,
-                _quality);
+                _quality,
+                isPowerOf2);
         // try to pack it into the given size
         var packer : MaxRectPackerImpl = new MaxRectPackerImpl(atlasSize.x, atlasSize.y);
         var placed : Vector.<SwfTexture> = new Vector.<SwfTexture>();
@@ -51,14 +62,33 @@ public class MaxRectMultiPacker extends MultiPackerBase {
             var h : int = swfTexture.h + (_borderSize * 2);
             var rect : Rectangle = packer.quickInsert(w,h);
             if (rect == null) {
-                if (Util.nextPowerOfTwo(atlasSize.x + 1) <= _maxAtlasSize ||
-                    Util.nextPowerOfTwo(atlasSize.y + 1) <= _maxAtlasSize) {
-                    if (atlasSize.x < atlasSize.y) atlasSize.x = atlasSize.x * 2;
-                    else atlasSize.y = atlasSize.y * 2;
-                    //log.debug("Element " + swfTexture.symbol + " does not fit, trying with a " + atlasSize + " texture. Max size is: " + _maxAtlasSize);
-                    packIntoAtlas(atlasSize);
-                    return;
+                if (isPowerOf2)
+                {
+                    if (Util.nextPowerOfTwo(atlasSize.x + 1) <= _maxAtlasSize ||
+                        Util.nextPowerOfTwo(atlasSize.y + 1) <= _maxAtlasSize) {
+                        if (atlasSize.x < atlasSize.y) atlasSize.x = atlasSize.x * 2;
+                        else atlasSize.y = atlasSize.y * 2;
+                        log.debug("Element " + swfTexture.symbol + " does not fit, trying with a " + atlasSize + " texture. Max size is: " + _maxAtlasSize);
+                        packIntoAtlas(atlasSize, isPowerOf2);
+                        return;
+                    }
                 }
+                else
+                {
+                    if (atlasSize.x < _maxAtlasSize)
+                    {
+                        var newSize : uint = atlasSize.x * 1.1;
+                        if (newSize > _maxAtlasSize)
+                        {
+                            newSize = _maxAtlasSize;
+                        }
+                        atlasSize.x = newSize;
+                        atlasSize.y = newSize;
+                        packIntoAtlas(atlasSize, isPowerOf2);
+                        return;
+                    }
+                }
+
             }
             else {
                 // it fits, put into the atlas
@@ -71,18 +101,10 @@ public class MaxRectMultiPacker extends MultiPackerBase {
         }
         atlases.push(atlas);
         if (_unpacked.length > 0) {
-            packIntoAtlas(calculateMinimumSize(_unpacked, _borderSize, _maxAtlasSize));
+            packIntoAtlas(calculateMinimumSize(_unpacked, _borderSize, _maxAtlasSize, isPowerOf2), isPowerOf2);
         }
     }
 
-    private static const log :Log = Log.getLog(MaxRectMultiPacker);
-    private var atlases :Vector.<Atlas>;
-    private var _borderSize :uint;
-    private var _maxAtlasSize :uint;
-    private var _unpacked :Vector.<SwfTexture>;
-    private var _scaleFactor :int;
-    private var _quality :String;
-    private var _filenamePrefix :String;
 
 }
 }

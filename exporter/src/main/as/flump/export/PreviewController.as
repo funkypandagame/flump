@@ -3,7 +3,6 @@
 
 package flump.export {
 
-import aspire.util.F;
 import aspire.util.MathUtil;
 
 import flash.display.Sprite;
@@ -17,7 +16,6 @@ import flump.TextFieldUtil;
 import flump.Util;
 import flump.export.texturepacker.TexturePacker;
 import flump.export.view.AnimPreviewWindow;
-import flump.export.view.AtlasPreviewWindow;
 import flump.mold.MovieMold;
 import flump.xfl.XflLibrary;
 import flump.xfl.XflTexture;
@@ -34,6 +32,16 @@ import starling.display.Sprite;
 
 public class PreviewController
 {
+    protected var _previewSprite :DisplayObject;
+    protected var _previewBounds :Rectangle;
+    protected var _container :starling.display.Sprite;
+    protected var _originIcon :starling.display.Sprite;
+    protected var _animPreviewWindow :AnimPreviewWindow;
+    protected var _creator :DisplayCreator;
+
+    protected var _lib :XflLibrary;
+    protected var _project :ProjectConf;
+
     public function show (project :ProjectConf, lib :XflLibrary) :void {
         _lib = lib;
         _project = project;
@@ -42,7 +50,7 @@ public class PreviewController
             createAnimWindow();
         } else {
             _animPreviewWindow.activate();
-            showInternal();
+            onPreviewClick();
         }
     }
 
@@ -53,7 +61,7 @@ public class PreviewController
             _originIcon = Util.createOriginIcon();
 
             Starling.current.stage.addEventListener(Event.RESIZE, onAnimPreviewResize);
-            showInternal();
+            onPreviewClick();
         };
         _animPreviewWindow.open();
 
@@ -68,55 +76,61 @@ public class PreviewController
                     displayLibraryItem(_animPreviewWindow.textures.selectedItem.texture);
                 });
 
-        _animPreviewWindow.showAtlas.addEventListener(MouseEvent.CLICK, function (..._) :void {
-            if (_atlasPreviewWindow == null || _atlasPreviewWindow.closed) {
-                createAtlasWindow();
-            } else {
-                _atlasPreviewWindow.activate();
-            }
-        });
-    }
-
-    protected function createAtlasWindow () :void {
-        _atlasPreviewWindow = new AtlasPreviewWindow();
-        _atlasPreviewWindow.open();
-
         // default our atlas scale to our export scale
         var scale :Number = 1;
         var border :int = 1;
+        var optimizeMethod :String = ExportConf.OPTIMIZE_SPEED;
+        var isPOTTexture : Boolean = false;
         if (_project.exports.length > 0) {
             const exportConf :ExportConf = _project.exports[0];
             scale = exportConf.scale;
             border = exportConf.textureBorder;
+            optimizeMethod = exportConf.optimize;
+            isPOTTexture = exportConf.isPowerOf2Texture;
         }
-        _atlasPreviewWindow.scale.text = "" + scale;
-        _atlasPreviewWindow.border.text = "" + border;
-        _atlasPreviewWindow.preview.addEventListener(MouseEvent.CLICK, F.bind(updateAtlas));
-        updateAtlas();
+        _animPreviewWindow.scale.text = "" + scale;
+        _animPreviewWindow.border.text = "" + border;
+        _animPreviewWindow.optimizeBox.selectedItem = optimizeMethod;
+        _animPreviewWindow.usePowerOf2CheckBox.selected = isPOTTexture;
+
+        _animPreviewWindow.preview.addEventListener(MouseEvent.CLICK, onPreviewClick);
     }
 
-    protected function updateAtlas () :void {
-        // create our atlases
-        const exportConf :ExportConf =
-            (_project.exports.length > 0 ? _project.exports[0] : new ExportConf());
+    private function onPreviewClick(evt : MouseEvent = null) : void
+    {
+        const atlases:Vector.<Atlas> = createAtlases();
+        updateAtlasPreview(atlases);
+        updateMoviePreview(atlases);
+    }
 
-        const scale :Number = MathUtil.clamp(Number(_atlasPreviewWindow.scale.text), 0.001, 10);
-        _atlasPreviewWindow.scale.text = scale.toString();
-        const border :int = Math.max(0, int(_atlasPreviewWindow.border.text));
-        const optimizeStrategy :String = _atlasPreviewWindow.optimizeBox.selectedItem;
+    private function createAtlases() : Vector.<Atlas>
+    {
+        // create our atlases
+        const maxAtlasSize :uint = (_project.exports.length > 0 ?
+                ExportConf(_project.exports[0]).maxAtlasSize :
+                new ExportConf().maxAtlasSize);
+
+        const scale :Number = MathUtil.clamp(Number(_animPreviewWindow.scale.text), 0.001, 10);
+        _animPreviewWindow.scale.text = scale.toString();
+        const border :int = Math.max(0, int(_animPreviewWindow.border.text));
+        const optimizeStrategy :String = _animPreviewWindow.optimizeBox.selectedItem;
         try {
             const atlases:Vector.<Atlas> = TexturePacker.withLib(_lib)
                     .baseScale(scale)
                     .borderSize(border)
-                    .quality(exportConf.quality)
-                    .maxAtlasSize(exportConf.maxAtlasSize)
+                    .isPowerOf2(_animPreviewWindow.usePowerOf2CheckBox.selected)
+                    .maxAtlasSize(maxAtlasSize)
                     .optimizeForSpeed(optimizeStrategy==ExportConf.OPTIMIZE_SPEED)
                     .createAtlases();
         }
         catch (err : Error) {
-            ErrorWindowMgr.showErrorPopup("Error", err.toString(), _atlasPreviewWindow);
-            return;
+            ErrorWindowMgr.showErrorPopup("Error", err.toString(), _animPreviewWindow);
+            return new Vector.<Atlas>();
         }
+        return atlases;
+    }
+
+    private function updateAtlasPreview(atlases:Vector.<Atlas>) :void {
 
         var atlasSize :Number = 0;
         var atlasUsed :Number = 0;
@@ -149,12 +163,12 @@ public class PreviewController
         }
         const percentFormatter :NumberFormatter = new NumberFormatter();
         percentFormatter.fractionalDigits = 2;
-        _atlasPreviewWindow.atlasWasteValue.text = percentFormatter.format((1.0 - (atlasUsed/atlasSize)) * 100) + "%";
+        _animPreviewWindow.atlasWasteValue.text = percentFormatter.format((1.0 - (atlasUsed/atlasSize)) * 100) + "%";
 
         const uic :UIComponent = new UIComponent();
         uic.addChild(sprite);
 
-        const group :Group = _atlasPreviewWindow.bitmapLayoutGroup;
+        const group :Group = _animPreviewWindow.bitmapLayoutGroup;
         group.removeAllElements();
         group.addElement(uic);
 
@@ -164,12 +178,10 @@ public class PreviewController
         group.height = sprite.height;
     }
 
-    protected function showInternal () :void {
+    private function updateMoviePreview(atlases : Vector.<Atlas>) :void {
         // we dispose this at the end of the function
         var oldCreator :DisplayCreator = _creator;
-
-        _creator = new DisplayCreator(_lib);
-
+        _creator = new DisplayCreator(_lib, atlases, parseFloat(_animPreviewWindow.scale.text));
         // All explicitly exported movies
         const previewMovies :Vector.<MovieMold> =
             _lib.movies.filter(function (movie :MovieMold, ..._) :Boolean {
@@ -198,16 +210,12 @@ public class PreviewController
 
         Starling.current.stage.color = _lib.backgroundColor;
 
-        if (_atlasPreviewWindow != null && !_atlasPreviewWindow.closed) {
-            updateAtlas();
-        }
-
         if (oldCreator != null) {
             oldCreator.dispose();
         }
     }
 
-    protected function displayLibraryItem (name :String) :void {
+    private function displayLibraryItem (name :String) :void {
         while (_container.numChildren > 0) _container.removeChildAt(0);
         _previewSprite = _creator.createDisplayObject(name);
         _previewBounds = _previewSprite.bounds;
@@ -226,15 +234,6 @@ public class PreviewController
             ((_animPreviewWindow.previewGroup.height - _previewBounds.height) * 0.5) - _previewBounds.top;
     }
 
-    protected var _previewSprite :starling.display.DisplayObject;
-    protected var _previewBounds :Rectangle;
-    protected var _container :starling.display.Sprite;
-    protected var _originIcon :starling.display.Sprite;
-    protected var _animPreviewWindow :AnimPreviewWindow;
-    protected var _atlasPreviewWindow :AtlasPreviewWindow;
-    protected var _creator :DisplayCreator;
 
-    protected var _lib :XflLibrary;
-    protected var _project :ProjectConf;
 }
 }

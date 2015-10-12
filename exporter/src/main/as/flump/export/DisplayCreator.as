@@ -10,7 +10,6 @@ import flash.utils.Dictionary;
 
 import flump.display.Library;
 import flump.display.Movie;
-import flump.export.texturepacker.TexturePacker;
 import flump.mold.AtlasMold;
 import flump.mold.AtlasTextureMold;
 import flump.mold.KeyframeMold;
@@ -23,13 +22,18 @@ import starling.display.DisplayObject;
 import starling.display.Image;
 import starling.textures.Texture;
 
-public class DisplayCreator
-    implements Library
+public class DisplayCreator implements Library
 {
-    public function DisplayCreator (lib :XflLibrary) {
-        _lib = lib;
+    private const _maxDrawn :Map = ValueComputingMap.newMapOf(String, calcMaxDrawn);
+    private var _baseTextures :Vector.<Texture> = new <Texture>[];
+    private var _imageCreators :Dictionary = new Dictionary(); //<name, ImageCreator>
+    private var _lib :XflLibrary;
+    private var _scale : Number;
 
-        const atlases :Vector.<Atlas> = TexturePacker.withLib(lib).createAtlases();
+    public function DisplayCreator (lib :XflLibrary, atlases : Vector.<Atlas>, scale : Number) {
+        _lib = lib;
+        _scale = scale;
+
         for each (var atlas :Atlas in atlases) {
             var mold :AtlasMold = atlas.toMold();
             var baseTexture :Texture = AtlasUtil.toTexture(atlas);
@@ -79,7 +83,14 @@ public class DisplayCreator
     }
 
     public function createMovie (name :String) :Movie {
-        return new Movie(_lib.getMovieMold(name), _lib.frameRate, this);
+        var mold :MovieMold = _lib.getMovieMold(name);
+        if (_scale != 1) //TODO optimize better. Could create a new library when scale changes
+        {
+            mold = mold.clone();
+            mold.scale(_scale);
+            mold.fillLabels();
+        }
+        return new Movie(mold, _lib.frameRate, this);
     }
 
     public function dispose () :void {
@@ -100,13 +111,20 @@ public class DisplayCreator
      */
     public function getMaxDrawn (id :String) :int { return _maxDrawn.get(id); }
 
+    // TODO recalc when scale changes
     protected function calcMaxDrawn (id :String) :int {
         if (id == null) return 0;
 
         const tex :Texture = getStarlingTexture(id);
         if (tex != null) return tex.width * tex.height;
 
-        const mold :MovieMold = _lib.getMovieMold(id);
+        var mold :MovieMold = _lib.getMovieMold(id);
+        if (_scale != 1)
+        {
+            mold = mold.clone();
+            mold.scale(_scale);
+            mold.fillLabels();
+        }
         var maxDrawn :int = 0;
         for (var ii :int = 0; ii < mold.frames; ii++) {
             var drawn :int = 0;
@@ -126,10 +144,6 @@ public class DisplayCreator
         return ImageCreator(_imageCreators[symbol]).texture;
     }
 
-    protected const _maxDrawn :Map = ValueComputingMap.newMapOf(String, calcMaxDrawn);
-    protected var _baseTextures :Vector.<Texture> = new <Texture>[];
-    protected var _imageCreators :Dictionary = new Dictionary(); //<name, ImageCreator>
-    protected var _lib :XflLibrary;
 }
 }
 

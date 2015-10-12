@@ -19,12 +19,13 @@ public class SpaceSavingMultiPacker extends MultiPackerBase {
                          borderSize :uint,
                          scaleFactor :int,
                          quality :String,
-                         filenamePrefix :String) : Vector.<Atlas> {
+                         filenamePrefix :String,
+                         isPowerOf2 : Boolean/*TODO implement*/) : Vector.<Atlas> {
 
         var atlases :Vector.<Atlas> = new Vector.<Atlas>();
         while (textures.length > 0) {
             // find the optimal atlas size
-            var atlasSize :Point = calculateMinimumSize(textures, borderSize, maxAtlasSize);
+            var atlasSize :Point = calculateMinimumSize(textures, borderSize, maxAtlasSize, isPowerOf2);
             if (atlasSize.x < 2048 || atlasSize.y < 2048) {
                 // if the filled area is less than FILL_THRESHOLD try to fit them into a smaller texture
                 var atlasArea : Number = atlasSize.x * atlasSize.y;
@@ -45,7 +46,8 @@ public class SpaceSavingMultiPacker extends MultiPackerBase {
                     atlasSize.x, atlasSize.y,
                     borderSize,
                     scaleFactor,
-                    quality);
+                    quality,
+                    isPowerOf2);
             atlases.push(atlas);
 
             // try to put every texture into it

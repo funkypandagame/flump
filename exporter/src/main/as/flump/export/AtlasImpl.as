@@ -14,9 +14,21 @@ import flump.mold.AtlasTextureMold;
 
 public class AtlasImpl implements Atlas
 {
+    protected var _nodes :Array = [];
+    protected var _width :int;
+    protected var _height :int;
+    protected var _borderSize :int;
+    protected var _mask :BitmapData;
+    protected var _bitmapData :BitmapData;
+    protected var _scaleFactor :int;
+    protected var _quality :String;
+    protected var _isPowerOf2 : Boolean;
+
     public var name :String;
 
-    public function AtlasImpl (name :String, w :int, h :int, borderSize :int, scaleFactor :int, quality :String) {
+    public function AtlasImpl (name :String, w :int, h :int,
+                               borderSize :int, scaleFactor :int,
+                               quality :String, isPowerOf2 : Boolean) {
         this.name = name;
         _width = w;
         _height = h;
@@ -25,6 +37,7 @@ public class AtlasImpl implements Atlas
         _mask.lock();
         _scaleFactor = scaleFactor;
         _quality = quality;
+        _isPowerOf2 = isPowerOf2;
     }
 
     public function get area () :int { return _width * _height; }
@@ -64,14 +77,30 @@ public class AtlasImpl implements Atlas
             _nodes.forEach(function (node :Node, ..._) :void {
                 const bm :Bitmap = new Bitmap(node.texture.toBitmapData(_borderSize), "auto", true);
                 constructed.addChild(bm);
-                bm.x = node.paddedBounds.x;
+                bm.x = node.paddedBounds.x; // not bounds?
                 bm.y = node.paddedBounds.y;
                 collapsedBounds = collapsedBounds.union(node.paddedBounds);
             });
-            _bitmapData = Util.renderToBitmapData(constructed,
-                    Util.nextPowerOfTwo(collapsedBounds.x + collapsedBounds.width),
-                    Util.nextPowerOfTwo(collapsedBounds.y + collapsedBounds.height),
-                    quailty);
+            if (_isPowerOf2)
+            {
+                _bitmapData = Util.renderToBitmapData(constructed,
+                        Util.nextPowerOfTwo(collapsedBounds.x + collapsedBounds.width),
+                        Util.nextPowerOfTwo(collapsedBounds.y + collapsedBounds.height),
+                        quailty);
+            }
+            else
+            {
+                var texSize : uint = 0;
+                if (collapsedBounds.x + collapsedBounds.width < collapsedBounds.x + collapsedBounds.width)
+                {
+                    texSize = collapsedBounds.x + collapsedBounds.width;
+                }
+                else
+                {
+                    texSize = collapsedBounds.x + collapsedBounds.width;
+                }
+                _bitmapData = Util.renderToBitmapData(constructed, texSize, texSize, quailty);
+            }
         }
         return _bitmapData;
     }
@@ -104,14 +133,6 @@ public class AtlasImpl implements Atlas
         _mask.fillRect(_setMaskedRect, 0xffffffff);
     }
 
-    protected var _nodes :Array = [];
-    protected var _width :int;
-    protected var _height :int;
-    protected var _borderSize :int;
-    protected var _mask :BitmapData;
-    protected var _bitmapData :BitmapData;
-    protected var _scaleFactor :int;
-    protected var _quality :String;
 }
 }
 

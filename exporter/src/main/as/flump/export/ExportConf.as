@@ -8,7 +8,6 @@ import aspire.util.Set;
 import aspire.util.Sets;
 import aspire.util.StringUtil;
 
-import flash.display.StageQuality;
 import flash.filesystem.File;
 
 import flump.export.formats.ByteArrayZipFormat;
@@ -40,8 +39,8 @@ public class ExportConf
     public var scaleFactors :Array = [ 1 ];
     /** The optimization strategy. */
     public var optimize :String = OPTIMIZE_SPEED;
-    /** The stage quality setting (StageQuality). */
-    public var quality :String = StageQuality.BEST;
+    /** Whether to use rectangle textures */
+    public var isPowerOf2Texture :Boolean = false;
     /** Whether or not to pretty print the library. */
     public var prettyPrint :Boolean = false;
     /** Whether or not to combine all FLAs into a single library */
@@ -88,9 +87,9 @@ public class ExportConf
         conf.maxAtlasSize = optional(o, "maxAtlasSize", 2048);
         conf.scaleFactors = require(o, "scaleFactors");
         conf.optimize = optional(o, "optimize", OPTIMIZE_MEMORY);
-        conf.quality = optional(o, "quality", StageQuality.BEST);
         conf.prettyPrint = optional(o, "prettyPrint", false);
         conf.combine = optional(o, "combine", false);
+        conf.isPowerOf2Texture = optional(o, "isPowerOf2Texture", false);
         return conf;
     }
 

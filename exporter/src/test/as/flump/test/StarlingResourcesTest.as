@@ -27,12 +27,10 @@ public class StarlingResourcesTest
             assert(res.movieSymbols.length == 2, "There should be 2 items in movieNames");
             assert(res.movieSymbols.indexOf("nesteddance") != -1, "nesteddance should be in movies");
             assert(res.movieSymbols.indexOf("squaredance") != -1, "squaredance should be in movies");
-            const movie :Movie = res.createMovie("nesteddance");
-            assert(res.createImage("redsquare") != null);
+            const movie :Movie = res.createDisplayObject("nesteddance") as Movie;
             assert(movie.name == "nesteddance", "Movies should be named after their mold name");
-            assertThrows(F.bind(res.createImage, "nesteddance"), "Loaded movie as texture");
-            assertThrows(F.bind(res.createMovie, "redsquare"), "Loaded texture as movie");
-            assertThrows(F.bind(res.createMovie, "no movie with this id "));
+            assertThrows(F.bind(res.createDisplayObject, "redsquare"), "Loaded texture as movie");
+            assertThrows(F.bind(res.createDisplayObject, "no movie with this id "));
             RuntimePlaybackTest.addTests(runner, res);
         }
         checkBadResourcesFail(runner, NO_VERSION, "no version");

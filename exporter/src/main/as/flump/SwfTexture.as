@@ -7,7 +7,6 @@ import flash.display.Bitmap;
 import flash.display.BitmapData;
 import flash.display.DisplayObject;
 import flash.display.DisplayObjectContainer;
-import flash.display.MovieClip;
 import flash.display.Sprite;
 import flash.display.StageQuality;
 import flash.filters.ColorMatrixFilter;
@@ -15,8 +14,6 @@ import flash.geom.Matrix;
 import flash.geom.Point;
 import flash.geom.Rectangle;
 
-import flump.executor.load.LoadedSwf;
-import flump.mold.MovieMold;
 import flump.xfl.XflLibrary;
 import flump.xfl.XflTexture;
 
@@ -102,18 +99,19 @@ public class SwfTexture
 
     public function toString () :String { return "a " + this.a + " w " + this.w + " h " + this.h; }
 
-    private function recalculateSizeInfo () :void {
+    private function recalculateSizeInfo () :void
+    {
         // get normal bounds
-        _strictBounds = _disp.getChildAt(0).getBounds(_disp);
+        var _strictBounds : Rectangle = _disp.getChildAt(0).getBounds(_disp);
         _visualBounds = _strictBounds;
 
         // possibly increase the visual bounds (due to filter action)
         if (_treatAsFiltered) {
             // render to bmd
-            const topLeft:Point = new Point(
-                _s_filteredBmd.width / 2 - _strictBounds.width / 2 - _strictBounds.x,
-                _s_filteredBmd.height / 2 - _strictBounds.height / 2 - _strictBounds.y);
-            const m :Matrix = new Matrix(1, 0, 0, 1, topLeft.x, topLeft.y);
+            const topLeft : Point = new Point(
+                    _s_filteredBmd.width / 2 - _strictBounds.width / 2 - _strictBounds.x,
+                    _s_filteredBmd.height / 2 - _strictBounds.height / 2 - _strictBounds.y);
+            const m : Matrix = new Matrix(1, 0, 0, 1, topLeft.x, topLeft.y);
             _s_filteredBmd.drawWithQuality(_disp, m, null, null, null, true, this.quality);
 
             // calculate visual bounds
@@ -146,7 +144,6 @@ public class SwfTexture
     private var _disp :DisplayObjectContainer;
     private var _w :int, _h :int;
     private var _origin :Point;
-    private var _strictBounds :Rectangle;
     private var _visualBounds :Rectangle;
     private var _scale :Number;
     private var _treatAsFiltered:Boolean;
