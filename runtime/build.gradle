@@ -13,7 +13,7 @@ buildscript {
     }
 
     dependencies {
-        classpath group: 'org.gradlefx', name: 'gradlefx', version: '1.1'
+        classpath group: 'org.gradlefx', name: 'gradlefx', version: '1.3.1-FP'
     }
 }
 
@@ -22,7 +22,7 @@ apply plugin: 'ideafx'
 apply plugin: 'maven'
 
 group = 'com.threerings.flump'
-version = '1.4-FP-2015-05-11'
+version = '1.4-FP-2015-10-13'
 type = 'swc'
 output = 'flump-runtime'
 playerVersion = '15.0'
@@ -89,6 +89,7 @@ uploadArchives {
             else {
                 repository url: mavenLocal().url
             }
+			pom.artifactId = 'flump-runtime'
             //The publication doesn't know about our dependencies, so we have to manually add them to the pom
             pom.withXml {
                 def dependenciesNode = asNode().appendNode('dependencies')
