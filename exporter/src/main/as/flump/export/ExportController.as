@@ -5,6 +5,7 @@ import aspire.util.Log;
 import aspire.util.StringUtil;
 
 import flash.filesystem.File;
+import flash.utils.getTimer;
 
 import flump.executor.Executor;
 import flump.executor.Future;
@@ -83,10 +84,9 @@ public class ExportController {
     }
 
     protected function addFlashDocument (file :File) :void {
+        var startTime : uint = getTimer();
         var importPathLen :int = _importDirectory.nativePath.length + 1;
-        var name :String = file.nativePath.substring(importPathLen).replace(
-            new RegExp("\\" + File.separator, "g"), "/");
-
+        var name :String = file.nativePath.substring(importPathLen).replace(new RegExp("\\" + File.separator, "g"), "/");
         var load :Future;
         switch (Files.getExtension(file)) {
         case "fla":
@@ -97,8 +97,8 @@ public class ExportController {
             // Unsupported file type, ignore
             return;
         }
-
-        const status :DocStatus = new DocStatus(name, Ternary.UNKNOWN, Ternary.UNKNOWN, null);
+        const status :DocStatus = new DocStatus(name, Ternary.UNKNOWN, Ternary.UNKNOWN);
+        status.parseStartTime = startTime;
         addDoc(status);
         load.succeeded.add(F.argify(F.bind(docLoadSucceeded, status, F._1), 1));
         load.failed.add(F.argify(F.bind(docLoadFailed, file, status, F._1), 1));
@@ -108,10 +108,12 @@ public class ExportController {
         doc.lib = lib;
         for each (var err :ParseError in lib.getErrors()) handleParseError(err);
         doc.updateValid(Ternary.of(lib.valid));
+        doc.parseTime = ((getTimer() - doc.parseStartTime) / 1000).toFixed(1);
     }
 
     protected function docLoadFailed (file :File, doc :DocStatus, err :*) :void {
         doc.updateValid(Ternary.FALSE);
+        doc.parseTime = ((getTimer() - doc.parseStartTime) / 1000).toFixed(1);
     }
 
     /** returns all libs if all known flash docs are done loading, else null */

@@ -11,10 +11,14 @@ public class DocStatus extends EventDispatcher implements IPropertyChangeNotifie
     public var path :String;
     public var modified :String;
     public var valid :String = PENDING;
-    public var lib :XflLibrary;
 
-    public function DocStatus (path :String, modified :Ternary, valid :Ternary, lib :XflLibrary) {
-        this.lib = lib;
+    [Bindable]
+    public var parseTime : String = "..";
+    public var lib : XflLibrary;
+    public var parseStartTime : uint;
+
+    public function DocStatus (path :String, modified :Ternary, valid :Ternary) {
+        this.parseTime = parseTime;
         this.path = path;
         _uid = path;
 

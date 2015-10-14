@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.threerings.flump</groupId>
+  <artifactId>flump-runtime</artifactId>
+  <version>1.4-FP-2015-10-14</version>
+  <packaging>swc</packaging>
+  <dependencies>
+    <dependency>
+      <groupId>com.gamua</groupId>
+      <artifactId>starling-framework</artifactId>
+      <version>1.7.0</version>
+      <type>swc</type>
+    </dependency>
+    <dependency>
+      <groupId>org.osflash</groupId>
+      <artifactId>as3-signals</artifactId>
+      <version>0.8</version>
+      <type>swc</type>
+    </dependency>
+  </dependencies>
+</project>

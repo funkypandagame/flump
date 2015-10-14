@@ -66,8 +66,8 @@ public class KeyframeMold
     public var refXflTexture : Object; // Texture reference. Exporter uses it to speed up calculation
 
     public function rotate (delta :Number) :void {
-        skewX += delta;
-        skewY += delta;
+        skewX = skewX + delta;
+        skewY = skewY + delta;
     }
 
     public function toJSON (_:*) :Object {
@@ -77,10 +77,10 @@ public class KeyframeMold
         };
         if (ref != null) {
             json.ref = ref;
-            if (x != 0 || y != 0) json.loc = [round(x), round(y)];
+            if (x != 0 || y != 0) json.loc = [round(x, 1), round(y, 1)];
             if (scaleX != 1 || scaleY != 1) json.scale = [round(scaleX), round(scaleY)];
             if (skewX != 0 || skewY != 0) json.skew = [round(skewX), round(skewY)];
-            if (pivotX != 0 || pivotY != 0) json.pivot = [round(pivotX), round(pivotY)];
+            if (pivotX != 0 || pivotY != 0) json.pivot = [round(pivotX, 1), round(pivotY, 1)];
             if (alpha != 1) json.alpha = round(alpha);
             if (!visible) json.visible = visible;
             if (!tweened) json.tweened = tweened;
@@ -94,10 +94,10 @@ public class KeyframeMold
         var xml :XML = <kf duration={duration}/>;
         if (ref != null) {
             xml.@ref = ref;
-            if (x != 0 || y != 0) xml.@loc = "" + round(x) + "," + round(y);
+            if (x != 0 || y != 0) xml.@loc = "" + round(x, 1) + "," + round(y, 1);
             if (scaleX != 1 || scaleY != 1) xml.@scale = "" + round(scaleX) + "," + round(scaleY);
             if (skewX != 0 || skewY != 0) xml.@skew = "" + round(skewX) + "," + round(skewY);
-            if (pivotX != 0 || pivotY != 0) xml.@pivot = "" + round(pivotX) + "," + round(pivotY);
+            if (pivotX != 0 || pivotY != 0) xml.@pivot = "" + round(pivotX, 1) + "," + round(pivotY, 1);
             if (alpha != 1) xml.@alpha = round(alpha);
             if (!visible) xml.@visible = visible;
             if (!tweened) xml.@tweened = tweened;
@@ -107,21 +107,24 @@ public class KeyframeMold
         return xml;
     }
 
-    protected static function extractFields(o :Object, destObj :Object, source :String,
-        dest1 :String, dest2 :String) :void {
+    [Inline]
+    private static function extractFields(o :Object, destObj :Object, source :String, dest1 :String, dest2 :String) :void {
         const extracted :* = o[source];
-        if (extracted === undefined) return;
-        destObj[dest1] = extracted[0];
-        destObj[dest2] = extracted[1];
+        if (extracted !== undefined) {
+            destObj[dest1] = extracted[0];
+            destObj[dest2] = extracted[1];
+        }
     }
 
-    protected static function extractField(o :Object, destObj :Object, field :String) :void {
+    [Inline]
+    private static function extractField(o :Object, destObj :Object, field :String) :void {
         const extracted :* = o[field];
-        if (extracted === undefined) return;
-        destObj[field] = extracted;
+        if (extracted !== undefined) {
+            destObj[field] = extracted;
+        }
     }
 
-    protected static function round (n :Number, places :int = 4) :Number {
+    private static function round (n :Number, places :int = 3) :Number {
         const shift :int = Math.pow(10, places);
         return Math.round(n * shift) / shift;
     }

@@ -22,7 +22,7 @@ apply plugin: 'ideafx'
 apply plugin: 'maven'
 
 group = 'com.threerings.flump'
-version = '1.4-FP-2015-10-13'
+version = '1.4-FP-2015-10-14'
 type = 'swc'
 output = 'flump-runtime'
 playerVersion = '15.0'
@@ -58,7 +58,6 @@ additionalCompilerOptions = [
         '-inline',
         // AS3 metadata
         '-keep-as3-metadata+=Inline,Embed,SWF,Transient',
-        '-debug=false',
         '-verbose-stacktraces=true'
 ]
 

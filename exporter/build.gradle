@@ -56,7 +56,7 @@ dependencies {
     merged 'com.adobe:as3corelib:0.9.3'
     merged 'com.timconkling:aspire:1.1'
 	
-    merged 'com.threerings.flump:flump-runtime:1.4-FP-2015-10-13'
+    merged 'com.threerings.flump:flump-runtime:1.4-FP-2015-10-14'
 }
 
 additionalCompilerOptions = [
