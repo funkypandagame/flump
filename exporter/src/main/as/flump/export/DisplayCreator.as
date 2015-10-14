@@ -28,11 +28,19 @@ public class DisplayCreator implements Library
     private var _baseTextures :Vector.<Texture> = new <Texture>[];
     private var _imageCreators :Dictionary = new Dictionary(); //<name, ImageCreator>
     private var _lib :XflLibrary;
-    private var _scale : Number;
+    private const _scaledMovies : Dictionary = new Dictionary();
 
     public function DisplayCreator (lib :XflLibrary, atlases : Vector.<Atlas>, scale : Number) {
         _lib = lib;
-        _scale = scale;
+
+        for each (var movieMold : MovieMold in _lib.movies) {
+            if (scale != 1) {
+                movieMold = movieMold.clone();
+                movieMold.scale(scale);
+                movieMold.fillLabels();
+            }
+            _scaledMovies[movieMold.id] = movieMold;
+        }
 
         for each (var atlas :Atlas in atlases) {
             var mold :AtlasMold = atlas.toMold();
@@ -82,14 +90,8 @@ public class DisplayCreator implements Library
         return ImageCreator(_imageCreators[id]).texture;
     }
 
-    public function createMovie (name :String) :Movie {
-        var mold :MovieMold = _lib.getMovieMold(name);
-        if (_scale != 1) //TODO optimize better. Could create a new library when scale changes
-        {
-            mold = mold.clone();
-            mold.scale(_scale);
-            mold.fillLabels();
-        }
+    public function createMovie (id :String) :Movie {
+        var mold :MovieMold = _scaledMovies[id];
         return new Movie(mold, _lib.frameRate, this);
     }
 
@@ -111,20 +113,13 @@ public class DisplayCreator implements Library
      */
     public function getMaxDrawn (id :String) :int { return _maxDrawn.get(id); }
 
-    // TODO recalc when scale changes
     protected function calcMaxDrawn (id :String) :int {
         if (id == null) return 0;
 
         const tex :Texture = getStarlingTexture(id);
         if (tex != null) return tex.width * tex.height;
 
-        var mold :MovieMold = _lib.getMovieMold(id);
-        if (_scale != 1)
-        {
-            mold = mold.clone();
-            mold.scale(_scale);
-            mold.fillLabels();
-        }
+        var mold :MovieMold = _scaledMovies[id];
         var maxDrawn :int = 0;
         for (var ii :int = 0; ii < mold.frames; ii++) {
             var drawn :int = 0;

@@ -3,8 +3,6 @@
 
 package flump.export {
 
-import aspire.util.Log;
-
 import flash.filesystem.File;
 
 import flump.export.formats.PublishFormat;
@@ -58,6 +56,5 @@ public class Publisher
     private var _exportDir :File;
     private var _projectName :String;
     private const _confs :Vector.<ExportConf> = new <ExportConf>[];
-    private static const log :Log = Log.getLog(Publisher);
 }
 }

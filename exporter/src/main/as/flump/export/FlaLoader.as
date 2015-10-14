@@ -26,6 +26,9 @@ public class FlaLoader
     private var md5 : String;
     private var swf : LoadedSwf;
     private var future : FutureTask;
+    private const _loader :Executor = new Executor();
+    private var _library :XflLibrary;
+    private static const log :Log = Log.getLog(FlaLoader);
 
     public function load (name :String, file :File) :Future {
         log.info("Loading fla", "path", file.nativePath, "name", name);
@@ -70,10 +73,5 @@ public class FlaLoader
         _loader.shutdown();
     }
 
-    protected const _loader :Executor = new Executor();
-
-    protected var _library :XflLibrary;
-
-    private static const log :Log = Log.getLog(FlaLoader);
 }
 }

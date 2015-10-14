@@ -41,15 +41,15 @@ public class XflLibrary
     public const movies :Vector.<MovieMold> = new <MovieMold>[];
     public const textures :Vector.<XflTexture> = new <XflTexture>[];
 
-    /** Object to symbol name for all exported textures and movies in the library */
-    protected const _moldToSymbol :Map = Maps.newMapOf(Object);
-    /** Library name to symbol or generated symbol for all textures and movies in the library */
-    protected const _libraryNameToId :Map = Maps.newMapOf(String);
-    /** Exported movies or movies used in exported movies. */
-    protected const _toPublish :Set = Sets.newSetOf(MovieMold);
-    /** Symbol or generated symbol to XflTexture or MovieMold. */
+    /** Symbol ID to XflTexture or MovieMold. Contains only items where linkage name is set */
+    private const _exportedItems :Map = Maps.newMapOf(Object);
+    /** Library name to symbol or generated symbol for all textures and movies in the library. Only used as a helper during parsing */
+    private const _libraryNameToId :Map = Maps.newMapOf(String);
+    /** Exported MovieMolds and MovieMolds used in exported movies. */
+    private const _toPublish :Set = Sets.newSetOf(MovieMold);
+    /** Symbol ID to XflTexture or MovieMold. */
     private const _idToItem :Dictionary = new Dictionary();
-    protected const _errors :Vector.<ParseError> = new <ParseError>[];
+    private const _errors :Vector.<ParseError> = new <ParseError>[];
     private static const log :Log = Log.getLog(XflLibrary);
 
     public function XflLibrary (location :String) {
@@ -65,7 +65,7 @@ public class XflLibrary
     }
 
     public function isExported (movie :MovieMold) :Boolean {
-        return _moldToSymbol.containsKey(movie);
+        return _exportedItems.containsKey(movie);
     }
 
     public function get publishedMovies () :Vector.<MovieMold> {
@@ -280,8 +280,7 @@ public class XflLibrary
         textures.push(tex);
     }
 
-    private function addMovie(xml : XML) : void
-    {
+    private function addMovie(xml : XML) : void {
         const movie: MovieMold = new MovieMold();
         const exportName :String = XmlUtil.getStringAttr(xml, XflSymbol.EXPORT_CLASS_NAME, null);
         movie.id = createId(movie, XflMovie.getName(xml), exportName);
@@ -290,7 +289,7 @@ public class XflLibrary
     }
 
     private function createId (item :Object, libraryName :String, exportName :String) :String {
-        if (exportName != null) _moldToSymbol.put(item, exportName);
+        if (exportName != null) _exportedItems.put(item, exportName);
         const id :String = exportName == null ? IMPLICIT_PREFIX + libraryName : exportName;
         _libraryNameToId.put(libraryName, id);
         _idToItem[id] = item;

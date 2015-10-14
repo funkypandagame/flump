@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<s:WindowedApplication xmlns:fx="http://ns.adobe.com/mxml/2009"
-                       xmlns:s="library://ns.adobe.com/flex/spark"
-                       applicationComplete="init();">
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009"
+               visible="false"
+               xmlns:s="library://ns.adobe.com/flex/spark"
+               applicationComplete="init();">
     <fx:Script>
         <![CDATA[
             import flump.export.FlumpApp;
@@ -10,9 +11,8 @@
 
             private function init () :void {
                 _app.run(loaderInfo);
-                close(); // TODO check if this doesnt kill the command line version
             }
 
         ]]>
     </fx:Script>
-</s:WindowedApplication>
+</s:Application>
