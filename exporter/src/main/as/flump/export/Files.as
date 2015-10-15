@@ -42,7 +42,7 @@ public class Files
     }
 
     public static function list (dir :File, exec :Executor) :Future {
-        return exec.submit(function (onSuccess :Function, onError :Function) :void {
+        var future : Future = exec.submit(function (onSuccess :Function, onError :Function) :void {
             // Be anal about clearing out the listeners on both callbacks in case this directory is
             // listed again.
             function clearListeners () :void {
@@ -61,6 +61,7 @@ public class Files
             dir.addEventListener(ErrorEvent.ERROR, handleError);
             dir.getDirectoryListingAsync();
         });
+        return future;
     }
 
     public static function read (file :File) :ByteArray {

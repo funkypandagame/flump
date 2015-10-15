@@ -49,7 +49,7 @@ public class AutomaticExporter extends ExportController
                 // if finding docs generates a crit error, we need to fail immediately
                 if (_handedCritError) exit();
             });
-            findFlashDocuments(_importDirectory, exec, true);
+            importFlashDocuments(_importDirectory, exec);
         }
         else exit();
     }

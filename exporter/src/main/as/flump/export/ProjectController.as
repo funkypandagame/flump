@@ -340,7 +340,7 @@ public class ProjectController extends ExportController
             _docFinder.shutdownNow();
         }
         _docFinder = new Executor();
-        findFlashDocuments(dir, _docFinder, true);
+        importFlashDocuments(dir, _docFinder);
         _win.reload.enabled = true;
     }
 

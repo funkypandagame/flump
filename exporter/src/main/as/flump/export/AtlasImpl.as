@@ -91,13 +91,13 @@ public class AtlasImpl implements Atlas
             else
             {
                 var texSize : uint = 0;
-                if (collapsedBounds.x + collapsedBounds.width < collapsedBounds.x + collapsedBounds.width)
+                if (collapsedBounds.x + collapsedBounds.width > collapsedBounds.y + collapsedBounds.height)
                 {
                     texSize = collapsedBounds.x + collapsedBounds.width;
                 }
                 else
                 {
-                    texSize = collapsedBounds.x + collapsedBounds.width;
+                    texSize = collapsedBounds.y + collapsedBounds.height;
                 }
                 _bitmapData = Util.renderToBitmapData(constructed, texSize, texSize, quailty);
             }
