@@ -3,10 +3,9 @@
 
 package flump.xfl {
 
-import aspire.util.XmlUtil;
-
 import flump.mold.KeyframeMold;
 import flump.mold.LayerMold;
+import flump.util.XmlUtil;
 
 public class XflLayer
 {

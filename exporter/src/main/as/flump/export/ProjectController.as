@@ -4,7 +4,6 @@
 package flump.export {
 
 import aspire.util.F;
-import aspire.util.StringUtil;
 
 import flash.desktop.NativeApplication;
 import flash.display.NativeMenu;
@@ -15,10 +14,12 @@ import flash.events.Event;
 import flash.events.MouseEvent;
 import flash.filesystem.File;
 import flash.utils.IDataOutput;
+import flash.utils.setTimeout;
 
 import flump.executor.Executor;
 import flump.export.view.ProjectWindow;
 import flump.export.view.UnsavedChangesWindow;
+import flump.util.StringUtil;
 import flump.xfl.ParseError;
 import flump.xfl.XflLibrary;
 
@@ -32,6 +33,7 @@ import spark.events.GridSelectionEvent;
 public class ProjectController extends ExportController
 {
     public static const NA :NativeApplication = NativeApplication.nativeApplication;
+    private var toExport : Vector.<DocStatus>;
 
     public function ProjectController (configFile :File = null) {
         _win = new ProjectWindow();
@@ -122,10 +124,6 @@ public class ProjectController extends ExportController
         setupMenus();
     }
 
-    public function get projectDirty () :Boolean {
-        return _projectDirty;
-    }
-
     public function save (onSuccess :Function = null) :void {
         if (_confFile == null) {
             saveAs(onSuccess);
@@ -156,20 +154,35 @@ public class ProjectController extends ExportController
         return _win;
     }
 
-    protected function exportAll (modifiedOnly :Boolean) :void {
+    protected function exportAll(modifiedOnly :Boolean) :void {
         // if we have one or more combined export format, publish them
         if (hasCombinedExportConfig()) {
             var valid :Boolean = _flashDocsGrid.dataProvider.toArray()
-                .every(function (status :DocStatus,..._) :Boolean { return status.isValid; });
-            if (valid) exportCombined();
+                .every(function (status :DocStatus,..._) :Boolean {
+                        return status.isValid;
+                    });
+            if (valid) {
+                exportCombined();
+            }
         }
         // now publish any appropriate single formats
         if (hasSingleExportConfig()) {
+            toExport = new Vector.<DocStatus>();
             for each (var status :DocStatus in _flashDocsGrid.dataProvider.toArray()) {
                 if (status.isValid && (!modifiedOnly || status.isModified)) {
-                    exportFlashDocument(status);
+                    toExport.push(status);
                 }
             }
+            if (toExport.length > 0) {
+                processExportQueue();
+            }
+        }
+    }
+
+    private function processExportQueue() : void {
+        exportFlashDocument(toExport.shift());
+        if (toExport.length > 0) {
+            setTimeout(processExportQueue, 20);
         }
     }
 
@@ -284,9 +297,9 @@ public class ProjectController extends ExportController
         var formatNames :Array = [];
         var hasCombined :Boolean = false;
         if (_conf != null) {
-            for each (var export :ExportConf in _conf.exports) {
-                formatNames.push(export.description);
-                hasCombined ||= export.combine;
+            for each (var exportC :ExportConf in _conf.exports) {
+                formatNames.push(exportC.description);
+                hasCombined ||= exportC.combine;
             }
         }
         _win.formatOverview.text = formatNames.join(", ");
@@ -349,52 +362,56 @@ public class ProjectController extends ExportController
         const prevQuality :String = stage.quality;
 
         stage.quality = StageQuality.BEST;
-
-        try {
-            if (_exportChooser.dir == null) {
-                throw new Error("No export directory specified.");
-            }
-            if (_conf.exports.length == 0) {
-                throw new Error("No export formats specified.");
-            }
-            var published :int = createPublisher().publishSingle(status.lib);
-            if (published == 0) {
-                throw new Error("No suitable formats were found for publishing");
-            }
-        } catch (e :Error) {
-            log.warning("publishing failed", e);
-            ErrorWindowMgr.showErrorPopup("Publishing Failed", e.message, _win);
+        var err : String = "";
+        if (_exportChooser.dir == null) {
+            err = "No export directory specified.\n";
         }
-
+        if (_conf.exports.length == 0) {
+            err += "No export formats specified.\n";
+        }
+        if (err == "") {
+            var published :int = createPublisher().publishSingle(status.lib);
+        }
+        if (published == 0) {
+            err += "No suitable formats were found for publishing";
+        }
         stage.quality = prevQuality;
-        status.updateModified(Ternary.FALSE);
+        if (err != "") {
+            log.warning("publishing failed", err);
+            ErrorWindowMgr.showErrorPopup("Publishing Failed", err, _win);
+        }
+        else {
+            status.updateModified(Ternary.FALSE);
+        }
     }
 
     protected function exportCombined () :void {
         const stage :Stage = NA.activeWindow.stage;
         const prevQuality :String = stage.quality;
-
         stage.quality = StageQuality.BEST;
 
-        try {
-            if (_exportChooser.dir == null) {
-                throw new Error("No export directory specified.");
-            }
-            if (_conf.exports.length == 0) {
-                throw new Error("No export formats specified.");
-            }
-            var published :int = createPublisher().publishCombined(getLibs());
-            if (published == 0) {
-                throw new Error("No suitable formats were found for publishing");
-            }
-        } catch (e :Error) {
-            log.warning("publishing failed", e);
-            ErrorWindowMgr.showErrorPopup("Publishing Failed", e.message, _win);
+        var err : String = "";
+        if (_exportChooser.dir == null) {
+            err = "No export directory specified.\n";
         }
-
+        if (_conf.exports.length == 0) {
+            err += "No export formats specified.\n";
+        }
+        if (err == "") {
+            var published :int = createPublisher().publishCombined(getLibs());
+        }
+        if (published == 0) {
+            err += "No suitable formats were found for publishing";
+        }
         stage.quality = prevQuality;
-        for each (var status :DocStatus in _flashDocsGrid.dataProvider) {
-            status.updateModified(Ternary.FALSE);
+        if (err != "") {
+            log.warning("publishing failed", err);
+            ErrorWindowMgr.showErrorPopup("Publishing Failed", err, _win);
+        }
+        else {
+            for each (var status :DocStatus in _flashDocsGrid.dataProvider) {
+                status.updateModified(Ternary.FALSE);
+            }
         }
     }
 

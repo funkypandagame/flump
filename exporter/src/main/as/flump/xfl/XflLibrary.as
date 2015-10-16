@@ -8,7 +8,6 @@ import aspire.util.Map;
 import aspire.util.Maps;
 import aspire.util.Set;
 import aspire.util.Sets;
-import aspire.util.XmlUtil;
 import deng.fzip.FZip;
 
 import deng.fzip.FZipFile;
@@ -21,6 +20,7 @@ import flump.executor.load.LoadedSwf;
 import flump.mold.KeyframeMold;
 import flump.mold.LayerMold;
 import flump.mold.MovieMold;
+import flump.util.XmlUtil;
 
 public class XflLibrary
 {
@@ -111,34 +111,35 @@ public class XflLibrary
         const paths :Vector.<String> = new <String>[];
         if (docXml.symbols != null) {
             for each (var symbolXmlPath :XML in docXml.symbols.Include) {
-                paths.push("LIBRARY/" + XmlUtil.getStringAttr(symbolXmlPath, "href"));
+                var pathStr : String = XmlUtil.getStringAttr(symbolXmlPath, "href");
+                paths.push("LIBRARY/" + pathStr);
             }
         }
         // parse all library files
         const unexportedMovies :Map = Maps.newMapOf(String);
         for each (var path :String in paths) {
             var symbolFile :FZipFile = flaZip.getFileByName(path);
-            const xml :XML = Util.bytesToXML(symbolFile.content);
-            if (!XflSymbol.isSymbolItem(xml)) {
+            const symbolXml :XML = Util.bytesToXML(symbolFile.content);
+            if (!XflSymbol.isSymbolItem(symbolXml)) {
                 addTopLevelError(ParseError.DEBUG, "Skipping file since its root element isn't " + XflSymbol.SYMBOL_ITEM);
                 continue;
-            } else if (XmlUtil.getStringAttr(xml, XflSymbol.TYPE, "") == XflSymbol.TYPE_GRAPHIC) {
+            } else if (XmlUtil.getStringAttr(symbolXml, XflSymbol.TYPE, "") == XflSymbol.TYPE_GRAPHIC) {
                 trace("Skipping file because symbolType=graphic", path);
                 continue;
             }
-            const isSprite :Boolean = XmlUtil.getBooleanAttr(xml, XflSymbol.IS_SPRITE, false);
+            const isSprite :Boolean = XmlUtil.getBooleanAttr(symbolXml, XflSymbol.IS_SPRITE, false);
             log.debug("Parsing for library", "file", path, "isSprite", isSprite);
             try {
                 if (isSprite) {
-                    addTexture(xml);
+                    addTexture(symbolXml);
                 } else {
                     // It's a movie. If it's exported, we parse it now. Else, we save it for possible parsing later.
                     // (Un-exported movies that are not referenced will not be published.)
-                    if (XflMovie.isExported(xml)) {
-                        addMovie(xml);
+                    if (XflMovie.isExported(symbolXml)) {
+                        addMovie(symbolXml);
                     }
                     else {
-                        unexportedMovies.put(XflMovie.getName(xml), xml);
+                        unexportedMovies.put(XflMovie.getName(symbolXml), symbolXml);
                     }
                 }
             } catch (e :Error) {
@@ -284,7 +285,7 @@ public class XflLibrary
         const movie: MovieMold = new MovieMold();
         const exportName :String = XmlUtil.getStringAttr(xml, XflSymbol.EXPORT_CLASS_NAME, null);
         movie.id = createId(movie, XflMovie.getName(xml), exportName);
-        XflMovie.parse(this, xml, movie, exportName);
+        XflMovie.parse(this, xml, movie);
         movies.push(movie);
     }
 

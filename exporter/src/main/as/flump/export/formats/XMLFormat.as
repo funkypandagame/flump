@@ -5,7 +5,6 @@ package flump.export.formats {
 import flump.export.*;
 
 import aspire.util.F;
-import aspire.util.XmlUtil;
 
 import flash.filesystem.File;
 import flash.utils.IDataOutput;
@@ -14,6 +13,7 @@ import flump.Util;
 import flump.mold.LibraryMold;
 import flump.mold.MovieMold;
 import flump.mold.TextureGroupMold;
+import flump.util.XmlUtil;
 import flump.xfl.XflLibrary;
 
 public class XMLFormat extends PublishFormat

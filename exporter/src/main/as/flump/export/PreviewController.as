@@ -10,9 +10,10 @@ import flash.events.Event;
 import flash.events.MouseEvent;
 import flash.geom.Rectangle;
 import flash.text.TextField;
+import flash.text.TextFieldAutoSize;
+import flash.text.TextFormat;
 
 import flump.display.Movie;
-import flump.TextFieldUtil;
 import flump.Util;
 import flump.export.texturepacker.TexturePacker;
 import flump.export.view.AnimPreviewWindow;
@@ -142,12 +143,11 @@ public class PreviewController
             var h :int = atlasSprite.height;
 
             // atlas info
-            var tf :TextField = TextFieldUtil.newBuilder()
-                .text("Atlas " + ii + ": " + int(w) + "x" + int(h))
-                .color(0x0)
-                .autoSizeCenter()
-                .build();
-
+            var tf : TextField = new TextField();
+            tf.selectable = false;
+            tf.defaultTextFormat = new TextFormat("_sans", 22, 0x0);
+            tf.autoSize = TextFieldAutoSize.CENTER;
+            tf.text = "Atlas " + ii + ": " + int(w) + "x" + int(h);
             tf.x = 2;
             tf.y = sprite.height;
             sprite.addChild(tf);

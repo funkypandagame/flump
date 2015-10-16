@@ -3,11 +3,10 @@
 
 package flump.xfl {
 
-import aspire.util.XmlUtil;
-
 import flump.mold.KeyframeMold;
 import flump.mold.LayerMold;
 import flump.mold.MovieMold;
+import flump.util.XmlUtil;
 
 public class XflMovie extends XflSymbol
 {
@@ -34,8 +33,7 @@ public class XflMovie extends XflSymbol
         return names;
     }
 
-    public static function parse (lib :XflLibrary, xml :XML, movie: MovieMold,
-                                  exportName : String) :MovieMold {
+    public static function parse (lib :XflLibrary, xml :XML, movie: MovieMold) :MovieMold {
         const location :String = lib.location + ":" + movie.id;
 
         const layerEls :XMLList = xml.timeline.DOMTimeline[0].layers.DOMLayer;

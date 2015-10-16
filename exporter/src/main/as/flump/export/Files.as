@@ -3,7 +3,6 @@
 
 package flump.export {
 
-import aspire.util.StringUtil;
 
 import flash.events.ErrorEvent;
 import flash.events.Event;
@@ -78,10 +77,6 @@ public class Files
         out.open(file, FileMode.WRITE);
         writer(out);
         out.close();
-    }
-
-    public static function hasExtension (file :File, ext :String) :Boolean {
-        return !file.isHidden && StringUtil.endsWith(file.nativePath, "." + ext);
     }
 
     public static function getExtension (file :File) :String {

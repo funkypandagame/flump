@@ -2,7 +2,6 @@ package flump.export {
 
 import aspire.util.F;
 import aspire.util.Log;
-import aspire.util.StringUtil;
 
 import flash.events.ErrorEvent;
 
@@ -12,6 +11,7 @@ import flash.utils.getTimer;
 import flump.executor.Executor;
 import flump.executor.Future;
 import flump.export.formats.JSONFormat;
+import flump.util.StringUtil;
 import flump.xfl.ParseError;
 import flump.xfl.XflLibrary;
 

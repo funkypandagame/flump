@@ -26,12 +26,21 @@ public class SwfTexture
     public function get h() :int { return Math.ceil(_h * _scale); }
     public function get a() :int { return this.w * this.h; }
 
+    static private var _s_filteredBmd:BitmapData = new BitmapData(2048, 2048, true, 0x0);
+    { _s_filteredBmd.lock(); }
+
+    private var _disp :DisplayObjectContainer;
+    private var _w :int, _h :int;
+    private var _origin :Point;
+    private var _visualBounds :Rectangle;
+    private var _scale :Number;
+    private var _treatAsFiltered:Boolean;
+
     public static function fromTexture (lib :XflLibrary, tex : XflTexture,
             quality :String = StageQuality.BEST, scale :Number = 1,
             useNamespace :Boolean = false) :SwfTexture {
 
         scale = scale * tex.scale;
-        
         const klass :Class = Class(lib.swf.getSymbol(tex.symbol));
         const instance :Object = new klass();
         const ns :String = useNamespace ? lib.location + "/" : "";
@@ -141,14 +150,5 @@ public class SwfTexture
         });
     }
 
-    private var _disp :DisplayObjectContainer;
-    private var _w :int, _h :int;
-    private var _origin :Point;
-    private var _visualBounds :Rectangle;
-    private var _scale :Number;
-    private var _treatAsFiltered:Boolean;
-
-    static private var _s_filteredBmd:BitmapData = new BitmapData(2048, 2048, true, 0x0);
-    { _s_filteredBmd.lock(); }
 }
 }

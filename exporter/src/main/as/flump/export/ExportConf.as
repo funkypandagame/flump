@@ -6,7 +6,6 @@ package flump.export {
 import aspire.util.Log;
 import aspire.util.Set;
 import aspire.util.Sets;
-import aspire.util.StringUtil;
 
 import flash.filesystem.File;
 
@@ -21,6 +20,7 @@ import flump.export.formats.XMLFormat;
 import flump.mold.AtlasMold;
 import flump.mold.optional;
 import flump.mold.require;
+import flump.util.StringUtil;
 import flump.xfl.XflLibrary;
 
 public class ExportConf
