@@ -22,7 +22,7 @@ apply plugin: 'ideafx'
 apply plugin: 'maven'
 
 group = 'com.threerings.flump'
-version = '1.4-FP-2015-10-14'
+version = '1.4-FP-2015-11-17'
 type = 'swc'
 output = 'flump-runtime'
 playerVersion = '15.0'
@@ -46,7 +46,7 @@ repositories {
 }
 
 dependencies {
-    airSDK group: 'com.adobe', name: 'AIRSDK', version: '15.0', ext: Os.isFamily(Os.FAMILY_WINDOWS) ? 'zip' : 'tbz2'
+    airSDK group: 'com.adobe', name: 'AIRSDK', version: '19.0', ext: Os.isFamily(Os.FAMILY_WINDOWS) ? 'zip' : 'tbz2'
 
     external 'com.gamua:starling-framework:1.7.0'
     external group: 'org.osflash', name: 'as3-signals', version: '0.8', ext: 'swc'

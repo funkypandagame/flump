@@ -33,8 +33,7 @@ import starling.utils.MatrixUtil;
  *
  * @see Library and LibraryLoader to create instances of Movie.
  */
-public class Movie extends Sprite
-    implements IAnimatable
+public class Movie extends Sprite implements IAnimatable
 {
     /** A label fired by all movies when entering their first frame. */
     public static const FIRST_FRAME :String = "flump.movie.FIRST_FRAME";
@@ -86,6 +85,11 @@ public class Movie extends Sprite
             if (_labels[ii] != null && _labels[ii].indexOf(label) != -1) return ii;
         }
         return -1;
+    }
+
+    public function get labels() : Vector.<Vector.<String>>
+    {
+        return _labels;
     }
 
     /** Plays the movie from its current frame. The movie will loop forever.  */

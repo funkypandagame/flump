@@ -4,6 +4,7 @@
 package flump.display {
 
 import flash.geom.Rectangle;
+import flash.utils.Dictionary;
 
 import flump.mold.KeyframeMold;
 import flump.mold.LayerMold;
@@ -36,9 +37,10 @@ internal class Layer implements IAnimatable
             _currentDisplay = new Sprite();
             _movie.addChild(_currentDisplay);
         } else {
+            var displayObjectDict : Dictionary = new Dictionary();
             // Create the display objects for each keyframe.
             // If multiple consecutive keyframes refer to the same library item, we reuse that item across those frames.
-            _displays = new Vector.<DisplayObject>(_keyframes.length, true); //TODO: make this a Dictionary to prevent multiple creation of the same asset
+            _displays = new Vector.<DisplayObject>(_keyframes.length, true);
             for (ii = 0; ii < _keyframes.length; ++ii) {
                 var kf :KeyframeMold = _keyframes[ii];
                 var display :DisplayObject = null;
@@ -46,9 +48,15 @@ internal class Layer implements IAnimatable
                     display = _displays[ii - 1];
                 } else {
                     if (kf.ref != null) {
-                        display = library.createDisplayObject(kf.ref);
-                        display.visible = false;
-                        _movie.addChild(display);
+                        if (displayObjectDict[kf.ref] == null) {
+                            display = library.createDisplayObject(kf.ref);
+                            display.visible = false;
+                            _movie.addChild(display);
+                            displayObjectDict[kf.ref] = display;
+                        }
+                        else {
+                            display = displayObjectDict[kf.ref];
+                        }
                     }
                 }
                 _displays[ii] = display;
