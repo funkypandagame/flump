@@ -18,6 +18,7 @@ import flump.Util;
 import flump.export.texturepacker.TexturePacker;
 import flump.export.view.AnimPreviewWindow;
 import flump.mold.MovieMold;
+import flump.util.BorderImage;
 import flump.xfl.XflLibrary;
 import flump.xfl.XflTexture;
 
@@ -36,6 +37,7 @@ public class PreviewController
     protected var _previewSprite :DisplayObject;
     protected var _previewBounds :Rectangle;
     protected var _container :starling.display.Sprite;
+    protected var _border :BorderImage;
     protected var _originIcon :starling.display.Sprite;
     protected var _animPreviewWindow :AnimPreviewWindow;
     protected var _creator :DisplayCreator;
@@ -60,7 +62,7 @@ public class PreviewController
         _animPreviewWindow.started = function (container :starling.display.Sprite) :void {
             _container = container;
             _originIcon = Util.createOriginIcon();
-
+            _border = new BorderImage();
             Starling.current.stage.addEventListener(Event.RESIZE, onAnimPreviewResize);
             onPreviewClick();
         };
@@ -221,16 +223,24 @@ public class PreviewController
         _previewBounds = _previewSprite.bounds;
         _container.addChild(_previewSprite);
         _container.addChild(_originIcon);
-        if (_previewSprite is Movie) {
+        _container.addChild(_border);
+
+        if (_previewSprite is Movie)
+        {
             Starling.juggler.add(Movie(_previewSprite));
         }
         onAnimPreviewResize();
     }
 
     protected function onAnimPreviewResize (..._) :void {
-        _previewSprite.x = _originIcon.x =
+        _border.setSize(_previewBounds.width, _previewBounds.height);
+        _border.pivotX = -_previewBounds.x;
+        _border.pivotY = -_previewBounds.y;
+        _border.visible = !(_previewSprite is Movie);
+
+        _previewSprite.x = _originIcon.x = _border.x =
             ((_animPreviewWindow.previewGroup.width - _previewBounds.width) * 0.5) - _previewBounds.left;
-        _previewSprite.y = _originIcon.y =
+        _previewSprite.y = _originIcon.y = _border.y =
             ((_animPreviewWindow.previewGroup.height - _previewBounds.height) * 0.5) - _previewBounds.top;
     }
 

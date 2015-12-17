@@ -57,6 +57,9 @@ dependencies {
     merged 'com.timconkling:aspire:1.1'
 	
     merged 'com.threerings.flump:flump-runtime:1.4-FP-2015-11-17'
+
+    merged 'com.gamua:starling-framework:1.7.0'
+    merged group: 'org.osflash', name: 'as3-signals', version: '0.8', ext: 'swc'
 }
 
 additionalCompilerOptions = [

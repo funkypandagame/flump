@@ -262,7 +262,7 @@ public class XflLibrary
                 kf.ref = _libraryNameToId.get(kf.ref);
                 var item :Object = _idToItem[kf.ref];
                 if (item == null) {
-                    addTopLevelError(ParseError.CRIT, "unrecognized library item '" + kf.ref + "'");
+                    addTopLevelError(ParseError.CRIT, "unrecognized library item in symbol '" + movie.id + "' layer:'" + layer.name + "' frame: " + (kf.index + 1));
                 } else if (item is MovieMold) {
                     setKeyframeIDs(MovieMold(item));
                     kf.refMovieMold = MovieMold(item);
